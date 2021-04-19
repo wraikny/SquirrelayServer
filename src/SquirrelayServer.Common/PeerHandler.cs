@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System.Reactive;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
+using System.Reactive.Threading.Tasks;
+
 using System.Threading.Tasks;
 
 using LiteNetLib;
@@ -11,7 +15,8 @@ namespace SquirrelayServer.Common
         where TSend : class
         where TRecv : class
     {
-        private readonly List<TRecv> _messages;
+        private readonly Subject<TRecv> _recvMsgs;
+
         private readonly NetPeer _peer;
         private readonly MessagePackSerializerOptions _options;
 
@@ -21,24 +26,20 @@ namespace SquirrelayServer.Common
         public PeerHandler(ulong id, NetPeer peer, MessagePackSerializerOptions options)
         {
             Id = id;
-            _messages = new List<TRecv>();
+            _recvMsgs = new Subject<TRecv>();
             _peer = peer;
             _options = options;
         }
 
-        private bool TryFindByType<U>(out U res)
-            where U : class, TRecv
+        public Task<URecv> WaitMsgOfType<URecv>()
+            where URecv : TRecv
         {
-            foreach (var m in _messages)
-            {
-                if (m is U t)
-                {
-                    res = t;
-                    return true;
-                }
-            }
-            res = null;
-            return false;
+            return _recvMsgs.Where(x => x is URecv).Select(x => (URecv)x).ToTask();
+        }
+
+        public void Receive(TRecv msg)
+        {
+            _recvMsgs.OnNext(msg);
         }
 
         public void Send<USend>(USend msg, DeliveryMethod method)
@@ -53,14 +54,7 @@ namespace SquirrelayServer.Common
             where URecv : class, TRecv
         {
             Send(msg, method);
-
-            URecv res;
-            while (!TryFindByType(out res))
-            {
-                await Task.Yield();
-            }
-
-            return res;
+            return await WaitMsgOfType<URecv>();
         }
     }
 }

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using System.Threading.Tasks;
 
-using SquirrelayServer;
+using SquirrelayServer.Common;
 
 using Xunit;
 
@@ -9,9 +9,9 @@ namespace SquirrelayServer.Tests
     public class Serialization
     {
         [Fact]
-        public void SerializeServerConfig()
+        public async Task SerializeServerConfig()
         {
-            var _config = Server.Config.LoadAsync(@"netconfig/config.json");
+            _ = await Config.LoadFromFileAsync(@"config/config.json");
         }
     }
 }

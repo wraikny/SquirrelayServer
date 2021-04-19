@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace SquirrelayServer.Common
 {
-    internal class Utils
+    internal static class Utils
     {
         public static T DeserializeJson<T>(string json, DataContractJsonSerializerSettings settings = null)
         {
@@ -18,6 +18,11 @@ namespace SquirrelayServer.Common
         {
             var content = await File.ReadAllTextAsync(path);
             return DeserializeJson<T>(content, settings);
+        }
+
+        public static float MsToSec(int ms)
+        {
+            return ms / 1000.0f;
         }
     }
 }

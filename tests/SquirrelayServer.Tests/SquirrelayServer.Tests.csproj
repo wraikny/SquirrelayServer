@@ -24,6 +24,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\..\config\**" LinkBase="config"  Visible="false">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\SquirrelayServer.Client\SquirrelayServer.Client.csproj" />
     <ProjectReference Include="..\..\src\SquirrelayServer.Common\SquirrelayServer.Common.csproj" />
     <ProjectReference Include="..\..\src\SquirrelayServer.Server\SquirrelayServer.Server.csproj" />

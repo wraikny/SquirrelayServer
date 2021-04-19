@@ -1,0 +1,17 @@
+{
+    "netConfig": {
+        "connectionKey": "SomeKey",
+        "port": 8080,
+        "mexClientsCount": 32,
+        "updateTime": 15,
+        "natPunchEnabled": false,
+        "pingInterval": 1000,
+        "disconnectTimeout": 5000,
+        "debugOnly": {
+            "simulationPacketLossChance": null,
+            "simulateLatencyRange": [ 17, 21 ]
+        }
+    },
+
+    "gameConfig": {}
+}

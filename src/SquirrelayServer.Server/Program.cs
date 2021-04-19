@@ -9,21 +9,15 @@ namespace SquirrelayServer.Server
 {
     public class Program
     {
-        private const string DefaultConfigPath = @"netconfig/config.json";
+        private const string DefaultConfigPath = @"serverconfig.json";
 
-        private static readonly MessagePackSerializerOptions options =
-            MessagePackSerializerOptions.Standard
-                .WithSecurity(MessagePackSecurity.UntrustedData)
-                .WithCompression(MessagePackCompression.Lz4BlockArray);
-
-        public static async ValueTask Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            var configPath = args.Length == 0 ? DefaultConfigPath : args[1];
+            var configPath = args.Length == 0 ? Common.Config.DefaultPath : args[1];
 
-            var config = await Config.LoadAsync(configPath);
+            var config = await Common.Config.LoadFromFileAsync(configPath);
 
-
-            var server = new Server(config, options);
+            var server = new Server(config, Options.DefaultOptions);
             server.Start();
         }
     }

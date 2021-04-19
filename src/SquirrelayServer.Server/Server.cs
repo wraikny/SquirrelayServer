@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 
 using LiteNetLib;
 
@@ -16,31 +17,90 @@ namespace SquirrelayServer.Server
     internal sealed class Server : INetEventListener
     {
         private readonly Config _config;
+        private readonly MessagePackSerializerOptions _options;
+
         private ulong _clientIdNext;
         private readonly Dictionary<int, PeerHandler<IServerMsg, IClientMsg>> _clients;
-        private readonly MessagePackSerializerOptions _options;
+
+        private readonly FPS _fps;
+
+        private readonly NetManager _manager;
+
+        public bool IsRunning { get; private set; }
+
 
         public Server(Config config, MessagePackSerializerOptions options)
         {
             _config = config;
-            _clients = new Dictionary<int, PeerHandler<IServerMsg, IClientMsg>>();
             _options = options;
+
+            _clientIdNext = 0;
+            _clients = new Dictionary<int, PeerHandler<IServerMsg, IClientMsg>>();
+
+            _fps = new FPS(config.NetConfig.UpdateTime);
+
+            _manager = new NetManager(this)
+            {
+                NatPunchEnabled = config.NetConfig.NatPunchEnabled,
+                UpdateTime = config.NetConfig.UpdateTime,
+                PingInterval = config.NetConfig.PingInterval,
+                DisconnectTimeout = config.NetConfig.DisconnectedTimeout
+            };
+
+#if DEBUG
+            if (config.NetConfig.DebugOnly.SimulationPacketLossChance is int chance)
+            {
+                _manager.SimulatePacketLoss = true;
+                _manager.SimulationPacketLossChance = chance;
+            }
+
+            if (config.NetConfig.DebugOnly.SimulationLatencyRange is (int min, int max))
+            {
+                _manager.SimulateLatency = true;
+                _manager.SimulationMinLatency = min;
+                _manager.SimulationMaxLatency = max;
+            }
+#endif
         }
 
         public void Start()
         {
+            if (IsRunning) return;
 
+            if (!_manager.Start(_config.NetConfig.Port))
+            {
+                throw new Exception("Failed to start the Server");
+            }
+
+            IsRunning = true;
+
+            _fps.Start();
+
+            while (true)
+            {
+                _manager.PollEvents();
+
+                // Todo: Update
+
+                _fps.Update();
+            }
         }
 
 
         void INetEventListener.OnConnectionRequest(ConnectionRequest request)
         {
-            // TODO
+            if (_manager.ConnectedPeersCount < _config.NetConfig.MaxClientsCount)
+            {
+                request.AcceptIfKey(_config.NetConfig.ConnectionKey);
+            }
+            else
+            {
+                request.Reject();
+            }
         }
 
         void INetEventListener.OnPeerConnected(NetPeer peer)
         {
-            // TODO
             var id = _clientIdNext;
             _clientIdNext++;
 
@@ -59,6 +119,7 @@ namespace SquirrelayServer.Server
             var clientMsg = MessagePackSerializer.Deserialize<IClientMsg>(reader.GetRemainingBytesSegment(), _options);
 
             // TODO
+            client.Receive(clientMsg);
 
             reader.Recycle();
         }
