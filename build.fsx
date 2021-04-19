@@ -14,6 +14,26 @@ open Fake.Core.TargetOperators
 
 Target.initEnvironment ()
 
+let shell cmd args =
+  Shell.Exec(cmd, args) |> function
+  | 0 -> Trace.tracefn "Success '%s %s'" cmd args
+  | code -> failwithf "Failed '%s %s', Exit Code: %d" cmd args code
+
+
+Target.create "Format" (fun _ ->
+  !! "src/**/*.csproj"
+  |> Seq.iter (fun proj ->
+    shell "dotnet" $"format {proj} -v diag"
+  )
+)
+
+Target.create "Format.Check" (fun _ ->
+  !! "src/**/*.csproj"
+  |> Seq.iter (fun proj ->
+    shell "dotnet" $"format {proj} --check -v diag"
+  )
+)
+
 Target.create "Clean" (fun _ ->
     !! "src/**/bin"
     ++ "src/**/obj"
