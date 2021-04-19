@@ -9,7 +9,7 @@ The goal is to be able to use it in multiple games by simply writing a configura
 For no particular reason, the name is a play on the animal Squirrel.
 
 
-## Build
+## Compilation
 
 ### Setup
 
@@ -19,7 +19,6 @@ $ dotnet tool restore
 ```
 
 ### Build
-
 ```sh
 $ dotnet fake build
 ```
