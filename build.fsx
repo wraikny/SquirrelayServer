@@ -48,6 +48,7 @@ Target.create "Build" (fun _ ->
 Target.create "All" ignore
 
 "Clean"
+  ==> "Format"
   ==> "Build"
   ==> "All"
 
