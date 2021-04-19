@@ -1,5 +1,7 @@
 ﻿using System;
+
 using SquirrelayServer;
+
 using Xunit;
 
 namespace SquirrelayServer.Tests
