@@ -37,3 +37,6 @@ jobs:
 
     - name: Build
       run: dotnet fake build
+
+    - name: Test
+      run: dotnet test
