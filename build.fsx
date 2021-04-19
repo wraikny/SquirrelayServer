@@ -45,11 +45,4 @@ Target.create "Build" (fun _ ->
     |> Seq.iter (DotNet.build id)
 )
 
-Target.create "All" ignore
-
-"Clean"
-  ==> "Format"
-  ==> "Build"
-  ==> "All"
-
-Target.runOrDefault "All"
+Target.runOrDefault "Build"

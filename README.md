@@ -20,7 +20,13 @@ $ dotnet tool restore
 
 ### Build
 ```sh
-$ dotnet fake build
+$ dotnet build [-c <Debug|Release>]
+```
+
+## Format
+
+```sh
+$ dotnet fake build -t format
 ```
 
 ## Dependencies
