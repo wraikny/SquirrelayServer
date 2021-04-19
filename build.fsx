@@ -36,15 +36,19 @@ Target.create "Format.Check" (fun _ ->
   )
 )
 
+Target.create "Test" (fun _ ->
+  shell "dotnet" "test --logger:\"console;verbosity=detailed\""
+)
+
 Target.create "Clean" (fun _ ->
-    !! "src/**/bin"
-    ++ "src/**/obj"
-    |> Shell.cleanDirs
+  !! "src/**/bin"
+  ++ "src/**/obj"
+  |> Shell.cleanDirs
 )
 
 Target.create "Build" (fun _ ->
-    !! "src/**/*.*proj"
-    |> Seq.iter (DotNet.build id)
+  !! "src/**/*.*proj"
+  |> Seq.iter (DotNet.build id)
 )
 
 Target.runOrDefault "Build"

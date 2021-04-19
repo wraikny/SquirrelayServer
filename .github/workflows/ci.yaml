@@ -39,4 +39,4 @@ jobs:
       run: dotnet fake build
 
     - name: Test
-      run: dotnet test
+      run: dotnet fake build -t test

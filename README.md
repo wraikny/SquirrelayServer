@@ -29,6 +29,12 @@ $ dotnet build [-c <Debug|Release>]
 $ dotnet fake build -t format
 ```
 
+## Test
+
+```sh
+$ dotnet fake build -t test
+```
+
 ## Dependencies
 - [LiteNetLib](https://github.com/RevenantX/LiteNetLib)
 - [MessagePack-CSharp](https://github.com/neuecc/MessagePack-CSharp)

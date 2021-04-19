@@ -26,7 +26,7 @@ namespace SquirrelayServer.Server
         public IReadOnlyDictionary<string, GameConfig> Games => _games;
 
 
-        internal static ValueTask<Config> LoadAsync(string path)
+        public static ValueTask<Config> LoadAsync(string path)
         {
             var settings = new DataContractJsonSerializerSettings
             {
