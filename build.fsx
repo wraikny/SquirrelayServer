@@ -22,6 +22,7 @@ let shell cmd args =
 
 Target.create "Format" (fun _ ->
   !! "src/**/*.csproj"
+  ++ "tests/**/*.csproj"
   |> Seq.iter (fun proj ->
     shell "dotnet" $"format {proj} -v diag"
   )
@@ -29,6 +30,7 @@ Target.create "Format" (fun _ ->
 
 Target.create "Format.Check" (fun _ ->
   !! "src/**/*.csproj"
+  ++ "tests/**/*.csproj"
   |> Seq.iter (fun proj ->
     shell "dotnet" $"format {proj} --check -v diag"
   )
@@ -37,7 +39,7 @@ Target.create "Format.Check" (fun _ ->
 Target.create "Clean" (fun _ ->
     !! "src/**/bin"
     ++ "src/**/obj"
-    |> Shell.cleanDirs 
+    |> Shell.cleanDirs
 )
 
 Target.create "Build" (fun _ ->
