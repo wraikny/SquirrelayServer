@@ -1,7 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net5.0</TargetFrameworks>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="formatDiagnosticLog.binlog" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SquirrelayServer.Common\SquirrelayServer.Common.csproj" />

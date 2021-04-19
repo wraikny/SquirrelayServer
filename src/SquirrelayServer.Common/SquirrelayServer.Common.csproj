@@ -1,12 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net5.0</TargetFrameworks>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MessagePack" Version="2.2.60" />
     <PackageReference Include="MessagePackAnalyzer" Version="2.2.60" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="formatDiagnosticLog.binlog" />
   </ItemGroup>
 
   <ItemGroup>
