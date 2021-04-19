@@ -3,13 +3,10 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 
+using SquirrelayServer.Common;
+
 namespace SquirrelayServer.Server
 {
-    [DataContract]
-    public sealed class GameConfig
-    {
-    }
-
     [DataContract]
     public sealed class Config
     {
