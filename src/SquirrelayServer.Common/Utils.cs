@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace SquirrelayServer.Common
 {
-    public class Utils
+    internal class Utils
     {
         public static T DeserializeJson<T>(string json, DataContractJsonSerializerSettings settings = null)
         {
