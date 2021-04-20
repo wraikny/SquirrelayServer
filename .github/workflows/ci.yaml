@@ -10,7 +10,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  ci:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
@@ -29,8 +29,11 @@ jobs:
       with:
         dotnet-version: ${{ matrix.dotnet }}
 
-    - name: Restore
+    - name: Restore Tool
       run: dotnet tool restore
+
+    - name: Restore Fake
+      run: dotnet fake build -t none
 
     - name: Format.Check
       run: dotnet fake build -t format.check

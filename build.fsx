@@ -104,6 +104,7 @@ Target.create "PreCommit" (fun _ ->
   Target.runSimple "Test" [ "release" ] |> ignore
 )
 
+Target.create "None" ignore
 Target.create "Default" ignore
 
 "Build" ==> "Default"
