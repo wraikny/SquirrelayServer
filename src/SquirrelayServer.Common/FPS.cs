@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SquirrelayServer.Common
 {
@@ -21,14 +22,14 @@ namespace SquirrelayServer.Common
             _stopwatch.Start();
         }
 
-        public void Update()
+        public async ValueTask Update()
         {
             _stopwatch.Stop();
             var deltaMs = (int)_stopwatch.ElapsedMilliseconds;
 
             if (deltaMs < _updateTime)
             {
-                Thread.Sleep(_updateTime - deltaMs);
+                await Task.Delay(_updateTime - deltaMs);
             }
 
             DeltaSecond = Utils.MsToSec(deltaMs);

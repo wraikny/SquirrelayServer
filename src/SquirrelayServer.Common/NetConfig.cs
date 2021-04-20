@@ -53,7 +53,7 @@ namespace SquirrelayServer.Common
             public int? SimulationPacketLossChance { get; private set; }
 
             [DataMember(Name = "simulateLatencyRange")]
-            private int[] _simulationLatencyRange;
+            private readonly int[] _simulationLatencyRange;
 
             [IgnoreDataMember]
             public (int, int)? SimulationLatencyRange { get; private set; }

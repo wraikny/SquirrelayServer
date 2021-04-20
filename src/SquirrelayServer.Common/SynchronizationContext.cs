@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading;
 
-namespace SquirrelayServer.Server
+namespace SquirrelayServer.Common
 {
-    internal sealed class ServerContext : SynchronizationContext
+    public sealed class Context : SynchronizationContext
     {
         private readonly struct Entry
         {
@@ -24,7 +24,7 @@ namespace SquirrelayServer.Server
 
         private readonly ConcurrentQueue<Entry> _actions;
 
-        public ServerContext()
+        public Context()
         {
             _actions = new ConcurrentQueue<Entry>();
         }

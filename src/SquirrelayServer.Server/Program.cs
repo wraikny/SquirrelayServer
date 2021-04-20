@@ -1,24 +1,45 @@
 ﻿using System;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
-using MessagePack;
-using MessagePack.Resolvers;
+using LiteNetLib;
+
+using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Server
 {
+    public sealed class Logger : INetLogger
+    {
+        public Logger()
+        {
+
+        }
+
+        void INetLogger.WriteNet(NetLogLevel level, string str, params object[] args)
+        {
+            var msg = args.Length == 0 ? str : string.Format(str, args);
+            Console.WriteLine($"[Log] {msg}");
+        }
+    }
+
     public class Program
     {
-        private const string DefaultConfigPath = @"serverconfig.json";
-
         public static async Task Main(string[] args)
         {
-            var configPath = args.Length == 0 ? Common.Config.DefaultPath : args[1];
+            NetDebug.Logger = new Logger();
 
-            var config = await Common.Config.LoadFromFileAsync(configPath);
+            var context = new Context();
+            SynchronizationContext.SetSynchronizationContext(context);
+
+            var configPath = args.Length == 0 ? Config.DefaultPath : args[1];
+
+            var config = await Config.LoadFromFileAsync(configPath);
 
             var server = new Server(config, Options.DefaultOptions);
-            server.Start();
+
+            await server.Start(() => {
+                context.Update();
+            });
         }
     }
 }

@@ -15,3 +15,4 @@ using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("SquirrelayServer.Client")]
 [assembly: InternalsVisibleTo("SquirrelayServer.Server")]
+[assembly: InternalsVisibleTo("SquirrelayServer.Tests")]

@@ -7,28 +7,23 @@ using System.Threading.Tasks;
 
 using LiteNetLib;
 
-using MessagePack;
-
 namespace SquirrelayServer.Common
 {
-    internal sealed class PeerHandler<TSend, TRecv>
+    internal sealed class MessageHandler<TSend, TRecv>
         where TSend : class
         where TRecv : class
     {
         private readonly Subject<TRecv> _recvMsgs;
 
-        private readonly NetPeer _peer;
-        private readonly MessagePackSerializerOptions _options;
+        private readonly ISender<TSend> _sender;
 
-        public ulong Id { get; private set; }
+        public ulong? Id { get; set; }
         public int Latency { get; internal set; }
 
-        public PeerHandler(ulong id, NetPeer peer, MessagePackSerializerOptions options)
+        public MessageHandler(ISender<TSend> sender)
         {
-            Id = id;
             _recvMsgs = new Subject<TRecv>();
-            _peer = peer;
-            _options = options;
+            _sender = sender;
         }
 
         public Task<URecv> WaitMsgOfType<URecv>()
@@ -42,18 +37,17 @@ namespace SquirrelayServer.Common
             _recvMsgs.OnNext(msg);
         }
 
-        public void Send<USend>(USend msg, DeliveryMethod method)
+        public void Send<USend>(USend msg, byte channelNumber, DeliveryMethod method)
             where USend : class, TSend
         {
-            var data = MessagePackSerializer.Serialize<TSend>(msg, _options);
-            _peer.Send(data, method);
+            _sender.Send(msg, channelNumber, method);
         }
 
-        public async ValueTask<URecv> SendWithResponse<USend, URecv>(USend msg, DeliveryMethod method)
-            where USend : class, TSend
+        public async ValueTask<URecv> SendWithResponseAsync<USend, URecv>(USend msg, byte channelNumber, DeliveryMethod method)
+            where USend : class, TSend, IWithResponse<URecv>
             where URecv : class, TRecv
         {
-            Send(msg, method);
+            _sender.Send(msg, channelNumber, method);
             return await WaitMsgOfType<URecv>();
         }
     }

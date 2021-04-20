@@ -1,10 +1,10 @@
 ﻿using MessagePack;
 
-namespace SquirrelayServer.Server
+namespace SquirrelayServer.Common
 {
     public class Options
     {
-        public static MessagePackSerializerOptions DefaultOptions =
+        public static readonly MessagePackSerializerOptions DefaultOptions =
             MessagePackSerializerOptions.Standard
                 .WithSecurity(MessagePackSecurity.UntrustedData)
                 .WithCompression(MessagePackCompression.Lz4BlockArray);

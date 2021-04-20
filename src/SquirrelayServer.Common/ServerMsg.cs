@@ -3,6 +3,8 @@
 
 namespace SquirrelayServer.Common
 {
+    [Union(0, typeof(ClientId))]
+    [Union(1, typeof(RoomList))]
     public interface IServerMsg
     {
         [MessagePackObject]
@@ -15,6 +17,16 @@ namespace SquirrelayServer.Common
             public ClientId(ulong id)
             {
                 Id = id;
+            }
+        }
+
+        [MessagePackObject]
+        public sealed class RoomList
+        {
+            [SerializationConstructor]
+            public RoomList()
+            {
+
             }
         }
     }

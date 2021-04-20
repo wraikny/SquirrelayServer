@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 using LiteNetLib;
 
@@ -20,7 +21,7 @@ namespace SquirrelayServer.Server
         private readonly MessagePackSerializerOptions _options;
 
         private ulong _clientIdNext;
-        private readonly Dictionary<int, PeerHandler<IServerMsg, IClientMsg>> _clients;
+        private readonly Dictionary<int, ClientHandler> _clients;
 
         private readonly FPS _fps;
 
@@ -35,7 +36,7 @@ namespace SquirrelayServer.Server
             _options = options;
 
             _clientIdNext = 0;
-            _clients = new Dictionary<int, PeerHandler<IServerMsg, IClientMsg>>();
+            _clients = new Dictionary<int, ClientHandler>();
 
             _fps = new FPS(config.NetConfig.UpdateTime);
 
@@ -48,13 +49,14 @@ namespace SquirrelayServer.Server
             };
 
 #if DEBUG
-            if (config.NetConfig.DebugOnly.SimulationPacketLossChance is int chance)
+            var debugOnly = config.NetConfig.DebugOnly;
+            if (debugOnly.SimulationPacketLossChance is int chance)
             {
                 _manager.SimulatePacketLoss = true;
                 _manager.SimulationPacketLossChance = chance;
             }
 
-            if (config.NetConfig.DebugOnly.SimulationLatencyRange is (int min, int max))
+            if (debugOnly.SimulationLatencyRange is (int min, int max))
             {
                 _manager.SimulateLatency = true;
                 _manager.SimulationMinLatency = min;
@@ -63,7 +65,7 @@ namespace SquirrelayServer.Server
 #endif
         }
 
-        public void Start()
+        public async ValueTask Start(Action onUpdated)
         {
             if (IsRunning) return;
 
@@ -82,7 +84,9 @@ namespace SquirrelayServer.Server
 
                 // Todo: Update
 
-                _fps.Update();
+                onUpdated?.Invoke();
+
+                await _fps.Update();
             }
         }
 
@@ -104,13 +108,15 @@ namespace SquirrelayServer.Server
             var id = _clientIdNext;
             _clientIdNext++;
 
-            var client = new PeerHandler<IServerMsg, IClientMsg>(id, peer, _options);
+            var client = new ClientHandler(id, peer, _options);
             _clients[peer.Id] = client;
         }
 
         void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
         {
             _clients.Remove(peer.Id);
+
+            // TODO: remove from room is client had been in a room.
         }
 
         void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
@@ -119,6 +125,7 @@ namespace SquirrelayServer.Server
             var clientMsg = MessagePackSerializer.Deserialize<IClientMsg>(reader.GetRemainingBytesSegment(), _options);
 
             // TODO
+
             client.Receive(clientMsg);
 
             reader.Recycle();
@@ -126,12 +133,12 @@ namespace SquirrelayServer.Server
 
         void INetEventListener.OnNetworkError(IPEndPoint endPoint, SocketError socketError)
         {
-            // TODO
+            NetDebug.Logger.WriteNet(NetLogLevel.Error, $"NetworkError at {endPoint} with {Enum.GetName(typeof(SocketError), socketError)}");
         }
 
         void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
         {
-            // TODO
+
         }
 
         void INetEventListener.OnNetworkLatencyUpdate(NetPeer peer, int latency)
