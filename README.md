@@ -1,12 +1,12 @@
 # SquirrelayServer
 
 SquirrelayServer は、リアルタイム通信のためのリレーサーバーです。
-設定ファイルを記述するだけで複数のゲームで利用できることを目指しています。
+設定ファイルを記述するだけで色々な種類のゲームで利用できることを目指しています。
 特に理由はないですが、名前は動物のリス（Squirrel）と掛けています。
 
 SquirrelayServer is a relay server for real-time communication.
-The goal is to be able to use it in multiple games by simply writing a configuration file.
-For no particular reason, the name is a play on the animal Squirrel.
+The goal is to be able to use it in various kinds of games by simply writing a configuration file.
+There is no particular reason for this, but the name is a reference to the animal "Squirrel".
 
 
 ## Compilation
@@ -19,9 +19,12 @@ $ dotnet tool restore
 ```
 
 ### Build
+
 ```sh
-$ dotnet build [-c <Debug|Release>]
+$ dotnet fake build [-e [c=<debug|release>]]
 ```
+
+Default configuration is DEBUG
 
 ## Format
 
