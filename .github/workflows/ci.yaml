@@ -35,8 +35,14 @@ jobs:
     - name: Format.Check
       run: dotnet fake build -t format.check
 
-    - name: Build
+    - name: Build(Debug)
       run: dotnet fake build -- DEBUG
 
-    - name: Test
-      run: dotnet fake build -t test
+    - name: Build(Release)
+      run: dotnet fake build -- RELEASE
+
+    - name: Test(Debug)
+      run: dotnet fake build -t test -- DEBUG
+
+    - name: Test(Release)
+      run: dotnet fake build -t test -- RELEASE

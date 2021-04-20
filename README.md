@@ -35,7 +35,7 @@ $ dotnet fake build -t format
 ## Test
 
 ```sh
-$ dotnet fake build -t test
+$ dotnet fake build -t test [-- <DEBUG|RELEASE>]
 ```
 
 ## Dependencies

@@ -33,6 +33,12 @@ module Utils =
   let (|LowerCase|_|) (x: string) (s: string) =
     if x.ToLower() = s.ToLower() then Some LowerCase else None
 
+  let getConfiguration = function
+    | Some (LowerCase("debug")) -> DotNet.BuildConfiguration.Debug
+    | Some (LowerCase("release")) -> DotNet.BuildConfiguration.Release
+    | Some (c) -> failwithf "Invalid configuration '%s'" c
+    | _ -> DotNet.BuildConfiguration.Debug
+
 
 Target.initEnvironment ()
 
@@ -55,7 +61,20 @@ Target.create "Format.Check" (fun _ ->
 )
 
 Target.create "Test" (fun _ ->
-  dotnet "test" "--logger:\"console;verbosity=detailed\""
+  let configuration =
+    args
+    |> Option.bind Array.tryHead
+    |> getConfiguration
+
+  !! "tests/**/*.*proj"
+  |> Seq.iter(fun proj ->
+    DotNet.test (fun p ->
+      { p with
+          Logger = Some "console;verbosity=detailed"
+          Configuration = configuration
+      }
+    ) proj
+  )
 )
 
 Target.create "Clean" (fun _ ->
@@ -68,11 +87,7 @@ Target.create "Build" (fun _ ->
   let configuration =
     args
     |> Option.bind Array.tryHead
-    |> function
-    | Some (LowerCase("debug")) -> DotNet.BuildConfiguration.Debug
-    | Some (LowerCase("release")) -> DotNet.BuildConfiguration.Release
-    | Some (c) -> failwithf "Invalid configuration '%s'" c
-    | _ -> DotNet.BuildConfiguration.Debug
+    |> getConfiguration
 
   !! "src/**/*.*proj"
   |> Seq.iter (DotNet.build (fun p ->
@@ -83,7 +98,10 @@ Target.create "Build" (fun _ ->
 
 Target.create "PreCommit" (fun _ ->
   Target.runSimple "Format" [] |> ignore
-  Target.runSimple "Test" [] |> ignore
+  Target.runSimple "Build" [ "debug" ] |> ignore
+  Target.runSimple "Build" [ "release" ] |> ignore
+  Target.runSimple "Test" [ "debug" ] |> ignore
+  Target.runSimple "Test" [ "release" ] |> ignore
 )
 
 Target.create "Default" ignore
