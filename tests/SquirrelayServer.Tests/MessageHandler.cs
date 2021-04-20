@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
+using MessagePack;
+
 using SquirrelayServer.Common;
 
 using Xunit;
-
-using MessagePack;
 
 namespace SquirrelayServer.Tests
 {
@@ -62,7 +62,7 @@ namespace SquirrelayServer.Tests
             handler.Receive(msg);
 
             await Task.Delay(10);
-            
+
             Assert.True(task.IsCompletedSuccessfully);
         }
     }
