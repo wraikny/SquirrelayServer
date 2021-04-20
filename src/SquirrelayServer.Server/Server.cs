@@ -19,13 +19,11 @@ namespace SquirrelayServer.Server
     {
         private readonly Config _config;
         private readonly MessagePackSerializerOptions _options;
+        private readonly Dictionary<int, ClientHandler> _clients;
+        private readonly FPS _fps;
+        private readonly NetManager _manager;
 
         private ulong _clientIdNext;
-        private readonly Dictionary<int, ClientHandler> _clients;
-
-        private readonly FPS _fps;
-
-        private readonly NetManager _manager;
 
         public bool IsRunning { get; private set; }
 
@@ -65,7 +63,7 @@ namespace SquirrelayServer.Server
 #endif
         }
 
-        public async ValueTask Start(Action onUpdated)
+        public async ValueTask Start()
         {
             if (IsRunning) return;
 
@@ -83,8 +81,6 @@ namespace SquirrelayServer.Server
                 _manager.PollEvents();
 
                 // Todo: Update
-
-                onUpdated?.Invoke();
 
                 await _fps.Update();
             }
@@ -110,6 +106,8 @@ namespace SquirrelayServer.Server
 
             var client = new ClientHandler(id, peer, _options);
             _clients[peer.Id] = client;
+
+            client.NotifyClientId();
         }
 
         void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)

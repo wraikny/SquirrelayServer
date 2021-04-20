@@ -28,18 +28,15 @@ namespace SquirrelayServer.Server
         {
             NetDebug.Logger = new Logger();
 
-            var context = new Context();
-            SynchronizationContext.SetSynchronizationContext(context);
-
             var configPath = args.Length == 0 ? Config.DefaultPath : args[1];
 
             var config = await Config.LoadFromFileAsync(configPath);
 
-            var server = new Server(config, Options.DefaultOptions);
+            var options = Options.DefaultOptions;
 
-            await server.Start(() => {
-                context.Update();
-            });
+            var server = new Server(config, options);
+
+            await server.Start();
         }
     }
 }

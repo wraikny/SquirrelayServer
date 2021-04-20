@@ -7,7 +7,7 @@ namespace SquirrelayServer.Common
     public interface IClientMsg
     {
         [MessagePackObject]
-        public sealed class SetPlayerInfo
+        public sealed class SetPlayerInfo : IClientMsg
         {
             [SerializationConstructor]
             public SetPlayerInfo()
@@ -17,7 +17,7 @@ namespace SquirrelayServer.Common
         }
 
         [MessagePackObject]
-        public sealed class GetRoomList : IWithResponse<IServerMsg.RoomList>
+        public sealed class GetRoomList : IClientMsg, IWithResponse<IServerMsg.RoomList>
         {
             public GetRoomList() { }
         }

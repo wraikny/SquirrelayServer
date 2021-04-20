@@ -1,5 +1,4 @@
-﻿using System.Reactive;
-using System.Reactive.Linq;
+﻿using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Reactive.Threading.Tasks;
 
@@ -13,16 +12,16 @@ namespace SquirrelayServer.Common
         where TSend : class
         where TRecv : class
     {
-        private readonly Subject<TRecv> _recvMsgs;
+        private readonly ISubject<TRecv> _recvMsgs;
 
         private readonly ISender<TSend> _sender;
 
         public ulong? Id { get; set; }
         public int Latency { get; internal set; }
 
-        public MessageHandler(ISender<TSend> sender)
+        public MessageHandler(ISubject<TRecv> subject, ISender<TSend> sender)
         {
-            _recvMsgs = new Subject<TRecv>();
+            _recvMsgs = subject;
             _sender = sender;
         }
 

@@ -8,7 +8,7 @@ namespace SquirrelayServer.Common
     public interface IServerMsg
     {
         [MessagePackObject]
-        public sealed class ClientId
+        public sealed class ClientId : IServerMsg
         {
             [Key(0)]
             public ulong Id { get; private set; }
@@ -21,7 +21,7 @@ namespace SquirrelayServer.Common
         }
 
         [MessagePackObject]
-        public sealed class RoomList
+        public sealed class RoomList : IServerMsg
         {
             [SerializationConstructor]
             public RoomList()
