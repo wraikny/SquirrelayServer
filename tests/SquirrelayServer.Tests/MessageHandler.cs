@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -38,12 +39,18 @@ namespace SquirrelayServer.Tests
             }
         }
 
+        private MessageHandler<Msg, Msg> CreateMessageHandler()
+        {
+            var subject = Subject.Synchronize(new Subject<Msg>());
+            var sender = new SenderMock();
+            var handler = new MessageHandler<Msg, Msg>(subject, sender);
+            return handler;
+        }
+
         [Fact]
         public void Send()
         {
-            var sender = new SenderMock();
-            var handler = new MessageHandler<Msg, Msg>(sender);
-
+            var handler = CreateMessageHandler();
             var msg = new Msg("Send Message");
 
             handler.Send(msg, default, default);
@@ -52,8 +59,7 @@ namespace SquirrelayServer.Tests
         [Fact]
         public async ValueTask WaitOfType()
         {
-            var sender = new SenderMock();
-            var handler = new MessageHandler<Msg, Msg>(sender);
+            var handler = CreateMessageHandler();
 
             var msg = new Msg("Recv Message");
 
