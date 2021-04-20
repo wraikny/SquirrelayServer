@@ -36,6 +36,8 @@ module Utils =
 
 Target.initEnvironment ()
 
+let args = Target.getArguments()
+
 Target.create "Format" (fun _ ->
   !! "src/**/*.csproj"
   ++ "tests/**/*.csproj"
@@ -64,9 +66,12 @@ Target.create "Clean" (fun _ ->
 
 Target.create "Build" (fun _ ->
   let configuration =
-    Environment.environVarOrDefault "c" "debug"
+    args
+    |> Option.bind Array.tryHead
     |> function
-    | LowerCase "release" -> DotNet.BuildConfiguration.Release
+    | Some (LowerCase("debug")) -> DotNet.BuildConfiguration.Debug
+    | Some (LowerCase("release")) -> DotNet.BuildConfiguration.Release
+    | Some (c) -> failwithf "Invalid configuration '%s'" c
     | _ -> DotNet.BuildConfiguration.Debug
 
   !! "src/**/*.*proj"
@@ -76,9 +81,13 @@ Target.create "Build" (fun _ ->
     }))
 )
 
-Target.create "Default" ignore
+Target.create "PreCommit" (fun _ ->
+  Target.runSimple "Format" [] |> ignore
+  Target.runSimple "Test" [] |> ignore
+)
 
+Target.create "Default" ignore
 
 "Build" ==> "Default"
 
-Target.runOrDefault "Default"
+Target.runOrDefaultWithArguments "Default"

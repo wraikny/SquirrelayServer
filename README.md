@@ -21,7 +21,7 @@ $ dotnet tool restore
 ### Build
 
 ```sh
-$ dotnet fake build [-e [c=<debug|release>]]
+$ dotnet fake build [-- <DEBUG|RELEASE>]
 ```
 
 Default configuration is DEBUG
