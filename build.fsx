@@ -22,15 +22,13 @@ module Utils =
 
   let dotnet cmd arg =
     let res = DotNet.exec id cmd arg
-    if not res.OK then
-      failwithf "Failed 'dotnet %s %s'" cmd arg
 
-  let getArgs cli =
-    let ctx = Context.forceFakeContext ()
-    // get the arguments
-    let args = ctx.Arguments
-    let parser = Docopt(cli)
-    parser.Parse(args)
+    let msg = $"dotnet %s{cmd} %s{arg}"
+
+    if res.OK then
+      Trace.tracefn "Success '%s'" msg
+    else
+      failwithf "Failed '%s'" msg
 
   let (|LowerCase|_|) (x: string) (s: string) =
     if x.ToLower() = s.ToLower() then Some LowerCase else None
@@ -76,11 +74,6 @@ Target.create "Build" (fun _ ->
     { p with
         Configuration = configuration
     }))
-)
-
-Target.create "Hoge" (fun _ ->
-  let hoge = Environment.environVarOrDefault "hoge" "HOGE"
-  Trace.tracefn "%s" hoge
 )
 
 Target.create "Default" ignore
