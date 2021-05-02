@@ -16,6 +16,10 @@ namespace SquirrelayServer.Server
     {
         private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
 
+        public ulong Id => _handler.Id.Value;
+
+        public int? RoomId { get; private set; }
+
         public int Latency
         {
             get => _handler.Latency;
@@ -30,6 +34,16 @@ namespace SquirrelayServer.Server
             {
                 Id = id,
             };
+        }
+
+        internal void EnterRoom(int roomId)
+        {
+            if (RoomId is int currentRoomId)
+            {
+                throw new InvalidOperationException($"Client '{_handler.Id}' has been already in room '{currentRoomId}'");
+            }
+
+            RoomId = roomId;
         }
 
         public void Receive(IClientMsg msg)

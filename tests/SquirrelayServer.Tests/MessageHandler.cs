@@ -67,7 +67,7 @@ namespace SquirrelayServer.Tests
 
             handler.Receive(msg);
 
-            await Task.Delay(10);
+            await Task.Delay(2);
 
             Assert.True(task.IsCompletedSuccessfully);
         }

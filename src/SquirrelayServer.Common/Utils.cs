@@ -24,5 +24,21 @@ namespace SquirrelayServer.Common
         {
             return ms / 1000.0f;
         }
+
+        public static float Clamp(float v, float min, float max)
+        {
+            if (v < min) return min;
+            if (v > max) return max;
+
+            return v;
+        }
+
+        public static int Clamp(int v, int min, int max)
+        {
+            if (v < min) return min;
+            if (v > max) return max;
+
+            return v;
+        }
     }
 }

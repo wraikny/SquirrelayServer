@@ -12,10 +12,14 @@ namespace SquirrelayServer.Common
     [MessagePackObject]
     public sealed class GameConfig
     {
+
+
         [OnDeserialized]
         private void OnDeserialized(StreamingContext c)
         {
 
         }
+
+
     }
 }

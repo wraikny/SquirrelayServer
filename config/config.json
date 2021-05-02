@@ -13,5 +13,9 @@
         }
     },
 
+    "roomConfig": {
+        "maxNumberOfPlayersRange": [ 2, 6 ]
+    },
+
     "gameConfig": {}
 }

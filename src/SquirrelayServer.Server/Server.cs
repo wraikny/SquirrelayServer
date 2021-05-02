@@ -80,7 +80,7 @@ namespace SquirrelayServer.Server
             {
                 _manager.PollEvents();
 
-                // Todo: Update
+                // Todo: Update game rooms
 
                 await _fps.Update();
             }

@@ -12,6 +12,9 @@ namespace SquirrelayServer.Common
         [DataMember(Name = "netConfig")]
         public NetConfig NetConfig { get; private set; }
 
+        [DataMember(Name = "roomConfig")]
+        public RoomConfig RoomConfig { get; private set; }
+
         [DataMember(Name = "gameConfig")]
         public GameConfig GameConfig { get; private set; }
 
