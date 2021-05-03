@@ -18,8 +18,9 @@ namespace SquirrelayServer.Server
     internal class Room
     {
         private ulong? _owner;
-        private readonly Dictionary<ulong, ClientHandler> _clients;
+        private readonly List<ulong> _clientIds;
         private readonly Dictionary<ulong, RoomPlayerStatus> _playersStatuses;
+        private readonly HashSet<ulong> _statusUpdatedIds;
 
         private readonly Stopwatch _disposeStopwatch;
 
@@ -27,14 +28,15 @@ namespace SquirrelayServer.Server
         public RoomInfo Info { get; private set; }
         public string Password { get; private set; }
 
-        public int PlayersCount => _clients.Count;
+        public int PlayersCount => _clientIds.Count;
 
         public RoomStatus RoomStatus { get; private set; }
 
         public Room(int id, RoomInfo info, string password)
         {
-            _clients = new Dictionary<ulong, ClientHandler>();
+            _clientIds = new List<ulong>();
             _playersStatuses = new Dictionary<ulong, RoomPlayerStatus>();
+            _statusUpdatedIds = new HashSet<ulong>();
 
             _disposeStopwatch = new Stopwatch();
 
@@ -56,14 +58,27 @@ namespace SquirrelayServer.Server
             }
         }
 
-        public void EnterRoomWithoutCheck(ClientHandler client)
+        public void Update()
         {
-            _clients.Add(client.Id, client);
-            client.EnterRoom(Id);
+            // TODO: status が playing のときにリレー処理を行う。
+            // playerのメッセージをためておくQueueも必要
+
+        }
+
+        public IServerMsg.SetPlayerStatusResponse SetPlayerStatus(ulong clientId, RoomPlayerStatus status)
+        {
+            _playersStatuses[clientId] = status;
+            _statusUpdatedIds.Add(clientId);
+            return IServerMsg.SetPlayerStatusResponse.Success;
+        }
+
+        public void EnterRoomWithoutCheck(ulong clientId)
+        {
+            _clientIds.Add(clientId);
 
             if (_owner is null)
             {
-                _owner = client.Id;
+                _owner = clientId;
                 RoomStatus = RoomStatus.WaitingToPlay;
             }
 
@@ -73,36 +88,74 @@ namespace SquirrelayServer.Server
             }
         }
 
-        public IServerMsg.EnterRoomResponse EnterRoom(ClientHandler client, string password)
+        public IServerMsg.EnterRoomResponse EnterRoom(ulong clientId, string password)
         {
             if (Password is string p && p != password) return IServerMsg.EnterRoomResponse.InvalidPassword;
-            if (Info.MaxNumberOfPlayers == _clients.Count) return IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation;
-            if (_clients.ContainsKey(client.Id)) return IServerMsg.EnterRoomResponse.AlreadyEntered;
+            if (Info.MaxNumberOfPlayers == _clientIds.Count) return IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation;
+            if (_clientIds.Contains(clientId)) return IServerMsg.EnterRoomResponse.AlreadyEntered;
 
-            EnterRoomWithoutCheck(client);
+            EnterRoomWithoutCheck(clientId);
 
-            return IServerMsg.EnterRoomResponse.Success;
+            return IServerMsg.EnterRoomResponse.Success(_playersStatuses);
         }
 
-        public IServerMsg.ExitRoomResponse ExitRoom(ClientHandler client)
+        public IServerMsg.ExitRoomResponse ExitRoom(ulong clientId)
         {
-            if (!_clients.Remove(client.Id))
+            if (!_clientIds.Remove(clientId))
             {
-                throw new InvalidOperationException($"Client '{client.Id}' doesn't exists in room '{Id}'");
+                throw new InvalidOperationException($"Client '{clientId}' doesn't exists in room '{Id}'");
             }
 
-            if (_owner == client.Id && _clients.Count != 0)
+            if (_owner == clientId && _clientIds.Count != 0)
             {
-                _owner = _clients.Values.First().Id;
+                _owner = _clientIds.First();
             }
-            else if (_clients.Count == 0)
+            else if (_clientIds.Count == 0)
             {
-                RoomStatus = RoomStatus.Playing;
+                RoomStatus = RoomStatus.OwnerExited;
                 _owner = null;
                 _disposeStopwatch.Start();
             }
 
             return IServerMsg.ExitRoomResponse.Success;
+        }
+
+        public IServerMsg.OperateRoomResponse OperateRoom(ulong clientId, RoomOperateKind kind)
+        {
+            if (_owner != clientId)
+            {
+                return IServerMsg.OperateRoomResponse.PlayerIsNotOwner;
+            }
+
+            switch (kind)
+            {
+                case RoomOperateKind.StartPlaying:
+                    {
+                        if (RoomStatus == RoomStatus.Playing)
+                        {
+                            return IServerMsg.OperateRoomResponse.InvalidRoomStatus;
+                        }
+
+                        RoomStatus = RoomStatus.Playing;
+
+                        break;
+                    }
+                case RoomOperateKind.FinishPlaying:
+                    {
+                        if (RoomStatus != RoomStatus.Playing)
+                        {
+                            return IServerMsg.OperateRoomResponse.InvalidRoomStatus;
+                        }
+
+                        RoomStatus = RoomStatus.WaitingToPlay;
+
+                        break;
+                    }
+                default:
+                    break;
+            }
+
+            return IServerMsg.OperateRoomResponse.Success;
         }
     }
 }

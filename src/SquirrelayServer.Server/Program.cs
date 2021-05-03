@@ -34,9 +34,16 @@ namespace SquirrelayServer.Server
 
             var options = Options.DefaultOptions;
 
-            var server = new Server(config, options);
+            var context = new Context();
+            SynchronizationContext.SetSynchronizationContext(context);
 
-            await server.Start();
+            var server = new Server(config, options);
+            _ = server.Start();
+
+            while (true)
+            {
+                context.Update();
+            }
         }
     }
 }

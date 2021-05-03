@@ -1,13 +1,18 @@
-﻿using MessagePack;
+﻿using System.Collections.Generic;
+
+using MessagePack;
 
 
 namespace SquirrelayServer.Common
 {
     [Union(0, typeof(ClientId))]
-    [Union(1, typeof(RoomListResponse))]
-    [Union(2, typeof(CreateRoomResponse))]
-    [Union(3, typeof(EnterRoomResponse))]
-    [Union(4, typeof(ExitRoomResponse))]
+    [Union(1, typeof(SetPlayerStatusResponse))]
+    [Union(2, typeof(RoomListResponse))]
+    [Union(3, typeof(CreateRoomResponse))]
+    [Union(4, typeof(EnterRoomResponse))]
+    [Union(5, typeof(ExitRoomResponse))]
+    [Union(6, typeof(OperateRoomResponse))]
+    [Union(7, typeof(UpdateRoomPlayers))]
     public interface IServerMsg
     {
         [MessagePackObject]
@@ -31,18 +36,46 @@ namespace SquirrelayServer.Common
             public ClientId(ulong id) : base(id) { }
         }
 
-        [MessagePackObject]
-        public sealed class RoomListResponse : IServerMsg
-        {
-            [SerializationConstructor]
-            public RoomListResponse()
-            {
 
+        [MessagePackObject]
+        public sealed class SetPlayerStatusResponse : IServerMsg, IResponse
+        {
+            public enum ErrorKind
+            {
+                PlayerOutOfRoom = 0,
+            }
+
+            [Key(0)]
+            public ErrorKind? Error { get; private set; }
+
+            [IgnoreMember]
+            public bool IsSuccess => Error is null;
+
+            [SerializationConstructor]
+            public SetPlayerStatusResponse(ErrorKind? error)
+            {
+                Error = error;
+            }
+
+            public static readonly SetPlayerStatusResponse PlayerOutOfRoom = new SetPlayerStatusResponse(ErrorKind.PlayerOutOfRoom);
+            public static readonly SetPlayerStatusResponse Success = new SetPlayerStatusResponse(null);
+        }
+
+        [MessagePackObject]
+        public sealed class RoomListResponse : IServerMsg, IResponse
+        {
+            [Key(0)]
+            public IReadOnlyCollection<RoomInfo> Info { get; private set; }
+
+            [SerializationConstructor]
+            public RoomListResponse(IReadOnlyCollection<RoomInfo> info)
+            {
+                Info = info;
             }
         }
 
         [MessagePackObject]
-        public sealed class CreateRoomResponse : IServerMsg
+        public sealed class CreateRoomResponse : IServerMsg, IResponse
         {
             public enum ErrorKind
             {
@@ -50,10 +83,10 @@ namespace SquirrelayServer.Common
             }
 
             [Key(0)]
-            public ErrorKind? Error { get; set; }
+            public ErrorKind? Error { get; private set; }
 
             [Key(1)]
-            public int Id { get; set; }
+            public int Id { get; private set; }
 
             [IgnoreMember]
             public bool IsSuccess => Error is null;
@@ -70,7 +103,7 @@ namespace SquirrelayServer.Common
         }
 
         [MessagePackObject]
-        public sealed class EnterRoomResponse : IServerMsg
+        public sealed class EnterRoomResponse : IServerMsg, IResponse
         {
             public enum ErrorKind
             {
@@ -81,35 +114,43 @@ namespace SquirrelayServer.Common
             }
 
             [Key(0)]
-            public ErrorKind? Error { get; set; }
+            public ErrorKind? Error { get; private set; }
+
+            [Key(1)]
+            public IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses { get; private set; }
 
             [IgnoreMember]
             public bool IsSuccess => Error is null;
 
             [SerializationConstructor]
-            public EnterRoomResponse(ErrorKind? error)
+            public EnterRoomResponse(ErrorKind? error, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
             {
                 Error = error;
+                Statuses = statuses;
             }
 
-            public static readonly EnterRoomResponse RoomNotFound = new EnterRoomResponse(ErrorKind.RoomNotFound);
-            public static readonly EnterRoomResponse InvalidPassword = new EnterRoomResponse(ErrorKind.InvalidPassword);
-            public static readonly EnterRoomResponse NumberOfPlayersLimitation = new EnterRoomResponse(ErrorKind.NumberOfPlayersLimitation);
-            public static readonly EnterRoomResponse AlreadyEntered = new EnterRoomResponse(ErrorKind.AlreadyEntered);
-            public static readonly EnterRoomResponse Success = new EnterRoomResponse(null);
+            public static readonly EnterRoomResponse RoomNotFound = new EnterRoomResponse(ErrorKind.RoomNotFound, null);
+            public static readonly EnterRoomResponse InvalidPassword = new EnterRoomResponse(ErrorKind.InvalidPassword, null);
+            public static readonly EnterRoomResponse NumberOfPlayersLimitation = new EnterRoomResponse(ErrorKind.NumberOfPlayersLimitation, null);
+            public static readonly EnterRoomResponse AlreadyEntered = new EnterRoomResponse(ErrorKind.AlreadyEntered, null);
+            public static EnterRoomResponse Success(IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
+                => new EnterRoomResponse(null, statuses);
         }
 
         [MessagePackObject]
-        public sealed class ExitRoomResponse : IServerMsg
+        public sealed class ExitRoomResponse : IServerMsg, IResponse
         {
 
             public enum ErrorKind
             {
-                PlayerOutOfRoom,
+                PlayerOutOfRoom = 0,
             }
 
             [Key(0)]
-            public ErrorKind? Error { get; set; }
+            public ErrorKind? Error { get; private set; }
+
+            [IgnoreMember]
+            public bool IsSuccess => Error is null;
 
             [SerializationConstructor]
             public ExitRoomResponse(ErrorKind? error)
@@ -119,6 +160,52 @@ namespace SquirrelayServer.Common
 
             public static readonly ExitRoomResponse PlayerOutOfRoom = new ExitRoomResponse(ErrorKind.PlayerOutOfRoom);
             public static readonly ExitRoomResponse Success = new ExitRoomResponse(null);
+        }
+
+        [MessagePackObject]
+        public sealed class OperateRoomResponse : IServerMsg, IResponse
+        {
+            public enum ErrorKind
+            {
+                PlayerOutOfRoom = 0,
+                PlayerIsNotOwner = 1,
+                InvalidRoomStatus = 2,
+            }
+
+            [Key(0)]
+            public ErrorKind? Error { get; private set; }
+
+            [IgnoreMember]
+            public bool IsSuccess => Error is null;
+
+            [SerializationConstructor]
+            public OperateRoomResponse(ErrorKind? error)
+            {
+                Error = error;
+            }
+
+            public static readonly OperateRoomResponse PlayerIsNotOwner = new OperateRoomResponse(ErrorKind.PlayerIsNotOwner);
+            public static readonly OperateRoomResponse PlayerOutOfRoom = new OperateRoomResponse(ErrorKind.PlayerOutOfRoom);
+            public static readonly OperateRoomResponse InvalidRoomStatus = new OperateRoomResponse(ErrorKind.InvalidRoomStatus);
+
+            public static OperateRoomResponse Success = new OperateRoomResponse(null);
+        }
+
+        [MessagePackObject]
+        public sealed class UpdateRoomPlayers
+        {
+            [Key(0)]
+            public ulong? Owner { get; private set; }
+
+            [Key(1)]
+            public IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses { get; private set; }
+
+            [SerializationConstructor]
+            public UpdateRoomPlayers(ulong? owner, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
+            {
+                Owner = owner;
+                Statuses = statuses;
+            }
         }
     }
 }

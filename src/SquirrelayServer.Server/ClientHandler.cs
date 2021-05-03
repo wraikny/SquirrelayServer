@@ -12,19 +12,27 @@ using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Server
 {
-    internal sealed class ClientRoomInfo
-    {
-        public int RoomId { get; set; }
-        public RoomPlayerStatus Status { get; set; }
-    }
-
-    internal sealed class ClientHandler
+    internal sealed class ClientHandler : IPlayer
     {
         private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
 
         public ulong Id => _handler.Id.Value;
 
-        public int? RoomId { get; private set; }
+        private int? _roomId;
+
+        public int? RoomId
+        {
+            get => _roomId;
+            set
+            {
+                if ((value is { }) && (_roomId is { }))
+                {
+                    throw new InvalidOperationException($"Client '{_handler.Id}' has been already in room '{_roomId}'");
+                }
+
+                _roomId = value;
+            }
+        }
 
         public int Latency
         {
@@ -32,24 +40,13 @@ namespace SquirrelayServer.Server
             set => _handler.Latency = value;
         }
 
-        public ClientHandler(ulong id, NetPeer peer, MessagePackSerializerOptions options)
+        public ClientHandler(ulong id, NetPeerSender<IServerMsg> sender)
         {
             var subject = Subject.Synchronize(new Subject<IClientMsg>());
-            var sender = new NetPeerSender<IServerMsg>(peer, options);
             _handler = new MessageHandler<IServerMsg, IClientMsg>(subject, sender)
             {
                 Id = id,
             };
-        }
-
-        public void EnterRoom(int roomId)
-        {
-            if (RoomId is int currentRoomId)
-            {
-                throw new InvalidOperationException($"Client '{_handler.Id}' has been already in room '{currentRoomId}'");
-            }
-
-            RoomId = roomId;
         }
 
         public void Receive(IClientMsg msg)
@@ -57,9 +54,9 @@ namespace SquirrelayServer.Server
             _handler.Receive(msg);
         }
 
-        public void NotifyClientId()
+        public void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableSequenced)
         {
-            _handler.Send(new IServerMsg.ClientId(_handler.Id.Value), 0, DeliveryMethod.ReliableOrdered);
+            _handler.Send(msg, channel, method);
         }
     }
 }

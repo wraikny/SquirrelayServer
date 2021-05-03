@@ -23,6 +23,9 @@ namespace SquirrelayServer.Common
         [DataMember(Name = "disposeSecondAfterCreated")]
         public float DisposeSecondWhileNoMember { get; set; }
 
+        [DataMember(Name = "updatingDisposeStatusIntervalSecond")]
+        public float UpdatingDisposeStatusIntervalSecond { get; set; }
+
 
 #pragma warning disable 0649
 
@@ -32,18 +35,37 @@ namespace SquirrelayServer.Common
         [IgnoreDataMember]
         public (int, int) MaxNumberOfPlayersRange { get; private set; }
 
+        [DataMember(Name = "generatedRoomIdRange")]
+        private readonly int[] _generatedRoomIdRange;
+
+        [IgnoreDataMember]
+        public (int, int) GeneratedRoomIdRange { get; private set; }
+
 #pragma warning restore 0649
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext c)
         {
-            if (_maxNumberOfPlayersRange is int[] arr && arr.Length == 2)
             {
-                MaxNumberOfPlayersRange = (arr[0], arr[1]);
+                if (_maxNumberOfPlayersRange is int[] arr && arr.Length == 2)
+                {
+                    MaxNumberOfPlayersRange = (arr[0], arr[1]);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Length of maxNumberOfPlayersRange is not equal to 2");
+                }
             }
-            else
+
             {
-                throw new InvalidOperationException("Length of maxNumberOfPlayersRange is not equal to 2");
+                if (_generatedRoomIdRange is int[] arr && arr.Length == 2)
+                {
+                    GeneratedRoomIdRange = (arr[0], arr[1]);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Length of generatedRoomIdRange is not equal to 2");
+                }
             }
         }
     }

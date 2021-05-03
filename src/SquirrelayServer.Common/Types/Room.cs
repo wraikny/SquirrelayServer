@@ -20,4 +20,10 @@ namespace SquirrelayServer.Common
         [Key(4)]
         public bool IsPlaying { get; set; }
     }
+
+    public enum RoomOperateKind
+    {
+        StartPlaying,
+        FinishPlaying,
+    }
 }

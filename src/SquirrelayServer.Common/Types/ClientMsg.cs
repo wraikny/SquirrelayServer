@@ -2,20 +2,24 @@
 
 namespace SquirrelayServer.Common
 {
-    [Union(0, typeof(SetPlayerInfo))]
+    [Union(0, typeof(SetPlayerStatus))]
     [Union(1, typeof(GetRoomList))]
     [Union(2, typeof(CreateRoom))]
     [Union(3, typeof(EnterRoom))]
     [Union(4, typeof(ExitRoom))]
+    [Union(5, typeof(OperateRoom))]
     public interface IClientMsg
     {
         [MessagePackObject]
-        public sealed class SetPlayerInfo : IClientMsg
+        public sealed class SetPlayerStatus : IClientMsg
         {
-            [SerializationConstructor]
-            public SetPlayerInfo()
-            {
+            [Key(0)]
+            public RoomPlayerStatus Status { get; private set; }
 
+            [SerializationConstructor]
+            public SetPlayerStatus(RoomPlayerStatus status)
+            {
+                Status = status;
             }
         }
 
@@ -70,11 +74,23 @@ namespace SquirrelayServer.Common
         [MessagePackObject]
         public sealed class ExitRoom : IClientMsg, IWithResponse<IServerMsg.ExitRoomResponse>
         {
-            [SerializationConstructor]
-            public ExitRoom()
-            {
+            public static readonly ExitRoom Instance = new ExitRoom();
+        }
 
+        [MessagePackObject]
+        public sealed class OperateRoom : IClientMsg
+        {
+            [Key(0)]
+            public RoomOperateKind Operate { get; private set; }
+
+            [SerializationConstructor]
+            public OperateRoom(RoomOperateKind operate)
+            {
+                Operate = operate;
             }
+
+            public static readonly OperateRoom StartPlaying = new OperateRoom(RoomOperateKind.StartPlaying);
+            public static readonly OperateRoom FinishPlaying = new OperateRoom(RoomOperateKind.FinishPlaying);
         }
     }
 }

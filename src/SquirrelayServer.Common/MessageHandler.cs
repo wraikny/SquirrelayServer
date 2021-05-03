@@ -44,7 +44,7 @@ namespace SquirrelayServer.Common
 
         public async ValueTask<URecv> SendWithResponseAsync<USend, URecv>(USend msg, byte channelNumber, DeliveryMethod method)
             where USend : class, TSend, IWithResponse<URecv>
-            where URecv : class, TRecv
+            where URecv : class, TRecv, IResponse
         {
             _sender.Send(msg, channelNumber, method);
             return await WaitMsgOfType<URecv>();

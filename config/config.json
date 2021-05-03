@@ -19,8 +19,10 @@
         "passwordEnabled": true,
         "enterWhilePlayingAllowed": true,
         "disposeSecondAfterCreated": 60,
-        "DisposeSecondWhileNoMember": 120,
-        "maxNumberOfPlayersRange": [ 2, 6 ]
+        "DisposeSecondWhileNoMember": 10,
+        "updatingDisposeStatusIntervalSecond": 10.0,
+        "maxNumberOfPlayersRange": [ 2, 6 ],
+        "generatedRoomIdRange": [ 1000, 9999 ]
     },
 
     "gameConfig": {}
