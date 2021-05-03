@@ -11,11 +11,18 @@ namespace SquirrelayServer.Common
         [DataMember(Name = "invisibleEnabled")]
         public bool InvisibleEnabled { get; private set; }
 
-        [DataMember(Name = "messageEnabled")]
-        public bool MessageEnabled { get; private set; }
+        [DataMember(Name = "roomMessageEnabled")]
+        public bool RoomMessageEnabled { get; private set; }
 
         [DataMember(Name = "passwordEnabled")]
         public bool PasswordEnabled { get; private set; }
+
+        [DataMember(Name = "enterWhilePlayingAllowed")]
+        public bool EnterWhilePlayingAllowed { get; set; }
+
+        [DataMember(Name = "disposeSecondAfterCreated")]
+        public float DisposeSecondWhileNoMember { get; set; }
+
 
 #pragma warning disable 0649
 

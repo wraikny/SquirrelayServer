@@ -16,5 +16,8 @@ namespace SquirrelayServer.Common
 
         [Key(3)]
         public string Message { get; set; }
+
+        [Key(4)]
+        public bool IsPlaying { get; set; }
     }
 }

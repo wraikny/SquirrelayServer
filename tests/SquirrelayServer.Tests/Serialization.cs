@@ -43,8 +43,19 @@ namespace SquirrelayServer.Tests
 
             for (var i = 0; i < 3; i++)
             {
-                Check<IServerMsg.RoomCreated, IServerMsg>(new IServerMsg.RoomCreated(i));
+                Check<IServerMsg.CreateRoomResponse, IServerMsg>(IServerMsg.CreateRoomResponse.Success(i));
             }
+
+            Check<IServerMsg.CreateRoomResponse, IServerMsg>(IServerMsg.CreateRoomResponse.AlreadyEntered);
+
+            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.RoomNotFound);
+            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.InvalidPassword);
+            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation);
+            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.AlreadyEntered);
+            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.Success);
+
+            Check<IServerMsg.ExitRoomResponse, IServerMsg>(IServerMsg.ExitRoomResponse.PlayerOutOfRoom);
+            Check<IServerMsg.ExitRoomResponse, IServerMsg>(IServerMsg.ExitRoomResponse.Success);
         }
 
         [Fact]
@@ -57,6 +68,13 @@ namespace SquirrelayServer.Tests
             Check<IClientMsg.CreateRoom, IClientMsg>(new IClientMsg.CreateRoom(false, null, 0, null));
             Check<IClientMsg.CreateRoom, IClientMsg>(new IClientMsg.CreateRoom(false, "", -1, ""));
             Check<IClientMsg.CreateRoom, IClientMsg>(new IClientMsg.CreateRoom(true, "password", 2, "mesage"));
+
+            Check<IClientMsg.EnterRoom, IClientMsg>(new IClientMsg.EnterRoom(0, null));
+            Check<IClientMsg.EnterRoom, IClientMsg>(new IClientMsg.EnterRoom(1, ""));
+            Check<IClientMsg.EnterRoom, IClientMsg>(new IClientMsg.EnterRoom(-1, "password"));
+
+            Check<IClientMsg.ExitRoom, IClientMsg>(new IClientMsg.ExitRoom());
+
         }
     }
 }

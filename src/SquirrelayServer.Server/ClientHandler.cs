@@ -12,6 +12,12 @@ using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Server
 {
+    internal sealed class ClientRoomInfo
+    {
+        public int RoomId { get; set; }
+        public RoomPlayerStatus Status { get; set; }
+    }
+
     internal sealed class ClientHandler
     {
         private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
@@ -36,7 +42,7 @@ namespace SquirrelayServer.Server
             };
         }
 
-        internal void EnterRoom(int roomId)
+        public void EnterRoom(int roomId)
         {
             if (RoomId is int currentRoomId)
             {

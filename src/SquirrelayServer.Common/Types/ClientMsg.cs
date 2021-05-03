@@ -6,6 +6,7 @@ namespace SquirrelayServer.Common
     [Union(1, typeof(GetRoomList))]
     [Union(2, typeof(CreateRoom))]
     [Union(3, typeof(EnterRoom))]
+    [Union(4, typeof(ExitRoom))]
     public interface IClientMsg
     {
         [MessagePackObject]
@@ -19,13 +20,13 @@ namespace SquirrelayServer.Common
         }
 
         [MessagePackObject]
-        public sealed class GetRoomList : IClientMsg, IWithResponse<IServerMsg.RoomList>
+        public sealed class GetRoomList : IClientMsg, IWithResponse<IServerMsg.RoomListResponse>
         {
             public GetRoomList() { }
         }
 
         [MessagePackObject]
-        public sealed class CreateRoom : IClientMsg
+        public sealed class CreateRoom : IClientMsg, IWithResponse<IServerMsg.CreateRoomResponse>
         {
             [Key(0)]
             public bool IsVisible { get; private set; }
@@ -63,6 +64,16 @@ namespace SquirrelayServer.Common
             {
                 RoomId = roomId;
                 Password = password;
+            }
+        }
+
+        [MessagePackObject]
+        public sealed class ExitRoom : IClientMsg, IWithResponse<IServerMsg.ExitRoomResponse>
+        {
+            [SerializationConstructor]
+            public ExitRoom()
+            {
+
             }
         }
     }

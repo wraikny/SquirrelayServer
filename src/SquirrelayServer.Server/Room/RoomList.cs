@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 using SquirrelayServer.Common;
@@ -21,7 +22,20 @@ namespace SquirrelayServer.Server
             _roomConfig = roomConfig;
         }
 
-        public int CreateRoom(IClientMsg.CreateRoom msg)
+        public void Update()
+        {
+            var removeIds = _rooms.Where(x =>
+                x.Value.DeltaSecondToDispose is float t
+                && (x.Value.RoomStatus == RoomStatus.OwnerExited && t > _roomConfig.DisposeSecondWhileNoMember)
+            ).Select(x => x.Key).ToArray();
+
+            foreach (var id in removeIds)
+            {
+                _rooms.Remove(id);
+            }
+        }
+
+        private int GenerateRoomId()
         {
             const int IdMin = 10000;
             const int IdMax = 100000;
@@ -32,6 +46,18 @@ namespace SquirrelayServer.Server
                 roomId = _rand.Next(IdMin, IdMax);
             }
 
+            return roomId;
+        }
+
+        public IServerMsg.CreateRoomResponse CreateRoom(ClientHandler client, IClientMsg.CreateRoom msg)
+        {
+            if (!(client.RoomId is null))
+            {
+                return IServerMsg.CreateRoomResponse.AlreadyEntered;
+            }
+
+            var roomId = GenerateRoomId();
+
             var maxRange = _roomConfig.MaxNumberOfPlayersRange;
 
             var roomInfo = new RoomInfo
@@ -39,7 +65,7 @@ namespace SquirrelayServer.Server
                 IsVisible = _roomConfig.InvisibleEnabled && msg.IsVisible,
                 MaxNumberOfPlayers = Utils.Clamp(msg.MaxNumberOfPlayers, maxRange.Item1, maxRange.Item2),
                 NumberOfPlayers = 0,
-                Message = _roomConfig.MessageEnabled ? msg.Message : null,
+                Message = _roomConfig.RoomMessageEnabled ? msg.Message : null,
             };
 
             var password = _roomConfig.PasswordEnabled ? msg.Password : null;
@@ -48,7 +74,9 @@ namespace SquirrelayServer.Server
 
             _rooms[roomId] = room;
 
-            return roomId;
+            room.EnterRoomWithoutCheck(client);
+
+            return IServerMsg.CreateRoomResponse.Success(roomId);
         }
 
         public IServerMsg.EnterRoomResponse EnterRoom(ClientHandler client, IClientMsg.EnterRoom msg)
