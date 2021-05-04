@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 using MessagePack;
 
+using Moq;
+
 using SquirrelayServer.Common;
 
 using Xunit;
-
-using Moq;
 
 namespace SquirrelayServer.Tests
 {

@@ -1,20 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
+using System.Text;
+
+using Moq;
 
 using SquirrelayServer;
 using SquirrelayServer.Common;
 
 using Xunit;
 
-using Moq;
-
 namespace SquirrelayServer.Tests
 {
     public class RoomListTest
     {
-        private static RoomConfig GetRoomConfig() => new RoomConfig {
+        private static RoomConfig GetRoomConfig() => new RoomConfig
+        {
             InvisibleEnabled = true,
             RoomMessageEnabled = true,
             PasswordEnabled = true,
