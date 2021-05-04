@@ -4,7 +4,7 @@ using MessagePack;
 
 namespace SquirrelayServer.Common
 {
-    internal interface ISender<T>
+    public interface ISender<T>
     {
         void Send<U>(U message, byte channelNumber, DeliveryMethod deliveryMethod) where U : T;
     }

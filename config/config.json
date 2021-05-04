@@ -18,8 +18,7 @@
         "roomMessageEnabled": true,
         "passwordEnabled": true,
         "enterWhilePlayingAllowed": true,
-        "disposeSecondAfterCreated": 60,
-        "DisposeSecondWhileNoMember": 10,
+        "DisposeSecondWhileNoMember": 120.0,
         "updatingDisposeStatusIntervalSecond": 10.0,
         "maxNumberOfPlayersRange": [ 2, 6 ],
         "generatedRoomIdRange": [ 1000, 9999 ]

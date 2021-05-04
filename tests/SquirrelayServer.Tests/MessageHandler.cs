@@ -10,6 +10,8 @@ using SquirrelayServer.Common;
 
 using Xunit;
 
+using Moq;
+
 namespace SquirrelayServer.Tests
 {
     public class MessageHandler
@@ -27,23 +29,20 @@ namespace SquirrelayServer.Tests
             }
         }
 
-        internal sealed class SenderMock : ISender<Msg>
-        {
-            public SenderMock() { }
-
-            void ISender<Msg>.Send<U>(U message, byte channelNumber, LiteNetLib.DeliveryMethod deliveryMethod)
-            {
-                var msg = MessagePackSerializer.Serialize<Msg>(message, Options.DefaultOptions);
-                var deserialized = MessagePackSerializer.Deserialize<Msg>(msg, Options.DefaultOptions);
-                Assert.Equal(message.Message, deserialized.Message);
-            }
-        }
-
         private MessageHandler<Msg, Msg> CreateMessageHandler()
         {
             var subject = Subject.Synchronize(new Subject<Msg>());
-            var sender = new SenderMock();
-            var handler = new MessageHandler<Msg, Msg>(subject, sender);
+
+            var sender = new Mock<ISender<Msg>>();
+            sender.Setup(s => s.Send(It.IsAny<Msg>(), It.IsAny<byte>(), It.IsAny<LiteNetLib.DeliveryMethod>()))
+                .Callback((Msg message, byte channelNumber, LiteNetLib.DeliveryMethod deliveryMethod) =>
+                {
+                    var msg = MessagePackSerializer.Serialize<Msg>(message, Options.DefaultOptions);
+                    var deserialized = MessagePackSerializer.Deserialize<Msg>(msg, Options.DefaultOptions);
+                    Assert.Equal(message.Message, deserialized.Message);
+                });
+
+            var handler = new MessageHandler<Msg, Msg>(subject, sender.Object);
             return handler;
         }
 

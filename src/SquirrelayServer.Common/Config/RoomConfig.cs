@@ -9,13 +9,13 @@ namespace SquirrelayServer.Common
     public sealed class RoomConfig
     {
         [DataMember(Name = "invisibleEnabled")]
-        public bool InvisibleEnabled { get; private set; }
+        public bool InvisibleEnabled { get; set; }
 
         [DataMember(Name = "roomMessageEnabled")]
-        public bool RoomMessageEnabled { get; private set; }
+        public bool RoomMessageEnabled { get; set; }
 
         [DataMember(Name = "passwordEnabled")]
-        public bool PasswordEnabled { get; private set; }
+        public bool PasswordEnabled { get; set; }
 
         [DataMember(Name = "enterWhilePlayingAllowed")]
         public bool EnterWhilePlayingAllowed { get; set; }
@@ -33,13 +33,13 @@ namespace SquirrelayServer.Common
         private readonly int[] _maxNumberOfPlayersRange;
 
         [IgnoreDataMember]
-        public (int, int) MaxNumberOfPlayersRange { get; private set; }
+        public (int, int) MaxNumberOfPlayersRange { get; internal set; }
 
         [DataMember(Name = "generatedRoomIdRange")]
         private readonly int[] _generatedRoomIdRange;
 
         [IgnoreDataMember]
-        public (int, int) GeneratedRoomIdRange { get; private set; }
+        public (int, int) GeneratedRoomIdRange { get; internal set; }
 
 #pragma warning restore 0649
 

@@ -18,6 +18,8 @@ namespace SquirrelayServer.Server
         private readonly Dictionary<int, RoomInfo> _roomInfoList;
         private readonly Dictionary<int, Room> _rooms;
 
+        internal IReadOnlyDictionary<int, Room> Rooms => _rooms;
+
 
         public RoomList(RoomConfig roomConfig)
         {
@@ -38,7 +40,7 @@ namespace SquirrelayServer.Server
             }
         }
 
-        private void UpdateDisposeStatus()
+        internal void UpdateDisposeStatus()
         {
             if (_rooms.Count == 0) return;
 
@@ -68,7 +70,7 @@ namespace SquirrelayServer.Server
 
         public IServerMsg.SetPlayerStatusResponse SetPlayerStatus(IPlayer player, IClientMsg.SetPlayerStatus msg)
         {
-            if (player.RoomId is { })
+            if (player.RoomId is null)
             {
                 return IServerMsg.SetPlayerStatusResponse.PlayerOutOfRoom;
             }
@@ -115,7 +117,7 @@ namespace SquirrelayServer.Server
 
             room.EnterRoomWithoutCheck(player.Id);
 
-            player.RoomId = room.Id;
+            player.RoomId = roomId;
 
             return IServerMsg.CreateRoomResponse.Success(roomId);
         }

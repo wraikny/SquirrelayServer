@@ -24,6 +24,8 @@ namespace SquirrelayServer.Server
 
         private readonly Stopwatch _disposeStopwatch;
 
+        internal IReadOnlyDictionary<ulong, RoomPlayerStatus> PlayerStatuses => _playersStatuses;
+
         public int Id { get; private set; }
         public RoomInfo Info { get; private set; }
         public string Password { get; private set; }
@@ -75,6 +77,7 @@ namespace SquirrelayServer.Server
         public void EnterRoomWithoutCheck(ulong clientId)
         {
             _clientIds.Add(clientId);
+            Info.NumberOfPlayers++;
 
             if (_owner is null)
             {
@@ -116,6 +119,8 @@ namespace SquirrelayServer.Server
                 _owner = null;
                 _disposeStopwatch.Start();
             }
+
+            Info.NumberOfPlayers--;
 
             return IServerMsg.ExitRoomResponse.Success;
         }
