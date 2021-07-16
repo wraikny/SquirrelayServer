@@ -9,6 +9,9 @@ namespace SquirrelayServer.Common
         void Send<U>(U message, byte channelNumber, DeliveryMethod deliveryMethod) where U : T;
     }
 
+    /// <summary>
+    /// Class for sending messages using NetPeer of LiteNetLib
+    /// </summary>
     internal class NetPeerSender<T> : ISender<T>
     {
         private readonly NetPeer _peer;

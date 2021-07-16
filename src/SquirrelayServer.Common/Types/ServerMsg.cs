@@ -5,6 +5,9 @@ using MessagePack;
 
 namespace SquirrelayServer.Common
 {
+    /// <summary>
+    /// Message sent by the server
+    ///</summary>
     [Union(0, typeof(ClientId))]
     [Union(1, typeof(SetPlayerStatusResponse))]
     [Union(2, typeof(RoomListResponse))]

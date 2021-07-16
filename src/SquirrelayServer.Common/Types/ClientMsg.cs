@@ -2,6 +2,9 @@
 
 namespace SquirrelayServer.Common
 {
+    /// <summary>
+    /// Message sent by the client
+    ///</summary>
     [Union(0, typeof(SetPlayerStatus))]
     [Union(1, typeof(GetRoomList))]
     [Union(2, typeof(CreateRoom))]

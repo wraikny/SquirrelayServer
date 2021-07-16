@@ -2,6 +2,9 @@
 
 namespace SquirrelayServer.Common
 {
+    /// <summary>
+    /// Configuration for LiteNetLib
+    ///</summary>
     [DataContract]
     public sealed class NetConfig
     {

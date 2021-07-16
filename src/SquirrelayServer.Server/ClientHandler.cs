@@ -12,6 +12,9 @@ using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Server
 {
+    /// <summary>
+    /// Class that sends and receives messages for each client
+    /// </summary>
     internal sealed class ClientHandler : IPlayer
     {
         private readonly MessageHandler<IServerMsg, IClientMsg> _handler;

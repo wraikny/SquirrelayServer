@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 namespace SquirrelayServer.Common
 {
+    /// <summary>
+    /// Class for controlling the FPS
+    /// </summary>
     internal sealed class FPS
     {
         private readonly int _updateTime;

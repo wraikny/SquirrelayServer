@@ -2,6 +2,9 @@
 
 namespace SquirrelayServer.Common
 {
+    /// <summary>
+    /// Information about the room
+    /// </summary>
     [MessagePackObject]
     public class RoomInfo
     {

@@ -5,6 +5,9 @@ using System.Text;
 
 namespace SquirrelayServer.Common
 {
+    /// <summary>
+    /// Configuration for room system
+    ///</summary>
     [DataContract]
     public sealed class RoomConfig
     {
