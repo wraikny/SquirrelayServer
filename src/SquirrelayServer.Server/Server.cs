@@ -87,10 +87,15 @@ namespace SquirrelayServer.Server
             {
                 _manager.PollEvents();
 
-                // Update
+                Update();
 
                 await _fps.Update();
             }
+        }
+
+        void Update()
+        {
+            // TODO: Update rooms that is started the game, and send messages to it's clients.
         }
 
 
@@ -165,6 +170,12 @@ namespace SquirrelayServer.Server
                 case IClientMsg.ExitRoom _:
                     {
                         var res = _roomList.ExitRoom(client);
+                        client.Send(res);
+                        break;
+                    }
+                case IClientMsg.OperateRoom m:
+                    {
+                        var res = _roomList.OperateRoom(client, m);
                         client.Send(res);
                         break;
                     }
