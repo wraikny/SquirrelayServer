@@ -19,24 +19,16 @@ namespace SquirrelayServer.Common
     public interface IServerMsg
     {
         [MessagePackObject]
-        public class SimpleMsg<T> : IServerMsg
+        public sealed class ClientId : IServerMsg
         {
             [Key(0)]
-            public T Value { get; private set; }
+            public ulong Id { get; private set; }
 
             [SerializationConstructor]
-            public SimpleMsg(T value)
+            public ClientId(ulong id)
             {
-                Value = value;
+                Id = id;
             }
-        }
-
-        [MessagePackObject]
-        public sealed class ClientId : SimpleMsg<ulong>
-        {
-
-            [SerializationConstructor]
-            public ClientId(ulong id) : base(id) { }
         }
 
 
