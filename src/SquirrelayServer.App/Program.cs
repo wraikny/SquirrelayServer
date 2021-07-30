@@ -1,14 +1,15 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 using LiteNetLib;
+
+using MessagePack;
 
 using SquirrelayServer.Common;
 
 namespace SquirrelayServer.App
 {
-    public sealed class Logger : INetLogger
+    internal sealed class Logger : INetLogger
     {
         public Logger()
         {
@@ -26,24 +27,22 @@ namespace SquirrelayServer.App
     {
         public static async Task Main(string[] args)
         {
+            // Set Logger
             NetDebug.Logger = new Logger();
 
-            var configPath = args.Length == 0 ? Config.DefaultPath : args[0];
-
+            // Load config
+            var configPath = args.Length == 0 ? @"config/config.json" : args[0];
             var config = await Config.LoadFromFileAsync(configPath);
 
-            var options = Options.DefaultOptions;
+            NetDebug.Logger.WriteNet(NetLogLevel.Info, "Config is loaded from '{0}'", configPath);
 
-            var context = new Context();
-            SynchronizationContext.SetSynchronizationContext(context);
+            // Start server
+            var options = MessagePackSerializerOptions.Standard
+                .WithSecurity(MessagePackSecurity.UntrustedData)
+                .WithCompression(MessagePackCompression.Lz4BlockArray);
 
             var server = new Server.Server(config, options);
-            _ = server.Start();
-
-            while (true)
-            {
-                context.Update();
-            }
+            await server.Start();
         }
     }
 }

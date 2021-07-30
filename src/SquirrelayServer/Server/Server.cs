@@ -77,27 +77,36 @@ namespace SquirrelayServer.Server
                 throw new Exception("Failed to start the Server");
             }
 
+            NetDebug.Logger.WriteNet(NetLogLevel.Info, "Server started at port {0}.", _config.NetConfig.Port);
+
             IsRunning = true;
 
-            _fps.Start();
+            _roomList.Start();
 
-            _ = _roomList.StartUpdatingDisposeStatus();
+            _fps.Start();
 
             while (true)
             {
                 _manager.PollEvents();
 
-                Update();
+                _roomList.Update();
 
                 await _fps.Update();
             }
         }
 
-        private void Update()
+        public void Stop()
         {
-            // TODO: Update rooms that is started the game, and send messages to it's clients.
-        }
+            _manager.Stop(true);
 
+            _clientIdNext = 0;
+            _clients.Clear();
+            _clientsByClientId.Clear();
+            _roomList.Stop();
+            _fps.Reset();
+
+            IsRunning = false;
+        }
 
         void INetEventListener.OnConnectionRequest(ConnectionRequest request)
         {

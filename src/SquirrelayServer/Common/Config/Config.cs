@@ -7,8 +7,6 @@ namespace SquirrelayServer.Common
     [DataContract]
     public sealed class Config
     {
-        public const string DefaultPath = @"config/config.json";
-
         [DataMember(Name = "netConfig")]
         public NetConfig NetConfig { get; private set; }
 
@@ -30,6 +28,13 @@ namespace SquirrelayServer.Common
             var settings = new DataContractJsonSerializerSettings();
 
             return Utils.DeserializeJsonFromFileAsync<Config>(path, settings);
+        }
+
+        public static Config LoadFromFile(string path)
+        {
+            var settings = new DataContractJsonSerializerSettings();
+
+            return Utils.DeserializeJsonFromFile<Config>(path, settings);
         }
 
         [OnDeserialized]

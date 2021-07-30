@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -20,6 +21,8 @@ namespace SquirrelayServer.Server
 
         internal IReadOnlyDictionary<int, Room> Rooms => _rooms;
 
+        private readonly Stopwatch _disposeIntervalStopWatch;
+
 
         public RoomList(RoomConfig roomConfig)
         {
@@ -28,18 +31,40 @@ namespace SquirrelayServer.Server
 
             _rooms = new Dictionary<int, Room>();
             _roomInfoList = new Dictionary<int, RoomInfo>();
+
+            _disposeIntervalStopWatch = new Stopwatch();
         }
 
-        public async ValueTask StartUpdatingDisposeStatus()
+        public void Start()
         {
-            var interval = _roomConfig.UpdatingDisposeStatusIntervalSecond;
-            while (true)
+            _disposeIntervalStopWatch.Start();
+        }
+
+        public void Update()
+        {
+            foreach (var (_, room) in _rooms)
             {
-                await Task.Delay((int)(1000 * interval));
+                room.Update();
+            }
+
+            // Update dispose
+            var disposeSecond = Utils.MsToSec((int)_disposeIntervalStopWatch.ElapsedMilliseconds);
+
+            if (disposeSecond >= _roomConfig.UpdatingDisposeStatusIntervalSecond)
+            {
                 UpdateDisposeStatus();
+                _disposeIntervalStopWatch.Restart();
             }
         }
 
+        public void Stop()
+        {
+            _rooms.Clear();
+            _roomInfoList.Clear();
+            _disposeIntervalStopWatch.Reset();
+        }
+
+        // `internal` for unit test
         internal void UpdateDisposeStatus()
         {
             if (_rooms.Count == 0) return;

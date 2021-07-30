@@ -64,7 +64,6 @@ namespace SquirrelayServer.Server
         {
             // TODO: status が playing のときにリレー処理を行う。
             // playerのメッセージをためておくQueueも必要
-
         }
 
         public IServerMsg.SetPlayerStatusResponse SetPlayerStatus(ulong clientId, RoomPlayerStatus status)

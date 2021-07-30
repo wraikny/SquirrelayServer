@@ -39,5 +39,10 @@ namespace SquirrelayServer.Common
 
             _stopwatch.Restart();
         }
+
+        public void Reset()
+        {
+            _stopwatch.Reset();
+        }
     }
 }

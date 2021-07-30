@@ -20,6 +20,12 @@ namespace SquirrelayServer.Common
             return DeserializeJson<T>(content, settings);
         }
 
+        public static T DeserializeJsonFromFile<T>(string path, DataContractJsonSerializerSettings settings = null)
+        {
+            var content = File.ReadAllText(path);
+            return DeserializeJson<T>(content, settings);
+        }
+
         public static float MsToSec(int ms)
         {
             return ms / 1000.0f;
