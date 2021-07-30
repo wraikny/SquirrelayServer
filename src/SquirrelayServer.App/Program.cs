@@ -6,7 +6,7 @@ using LiteNetLib;
 
 using SquirrelayServer.Common;
 
-namespace SquirrelayServer.Server
+namespace SquirrelayServer.App
 {
     public sealed class Logger : INetLogger
     {
@@ -37,7 +37,7 @@ namespace SquirrelayServer.Server
             var context = new Context();
             SynchronizationContext.SetSynchronizationContext(context);
 
-            var server = new Server(config, options);
+            var server = new Server.Server(config, options);
             _ = server.Start();
 
             while (true)

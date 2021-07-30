@@ -10,6 +10,6 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\SquirrelayServer.Common\SquirrelayServer.Common.csproj" />
+    <ProjectReference Include="..\SquirrelayServer\SquirrelayServer.csproj" />
   </ItemGroup>
 </Project>

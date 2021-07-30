@@ -31,9 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\SquirrelayServer.Common\SquirrelayServer.Common.csproj" />
-    <ProjectReference Include="..\..\src\SquirrelayServer.Server\SquirrelayServer.Server.csproj" />
-    <ProjectReference Include="..\..\src\SquirrelayServer.Client\SquirrelayServer.Client.csproj" />
+    <ProjectReference Include="..\..\src\SquirrelayServer\SquirrelayServer.csproj" />
   </ItemGroup>
 
 </Project>

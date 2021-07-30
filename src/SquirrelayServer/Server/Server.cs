@@ -15,7 +15,7 @@ using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Server
 {
-    internal sealed class Server : INetEventListener
+    public sealed class Server : INetEventListener
     {
         private readonly Config _config;
         private readonly MessagePackSerializerOptions _options;
@@ -93,7 +93,7 @@ namespace SquirrelayServer.Server
             }
         }
 
-        void Update()
+        private void Update()
         {
             // TODO: Update rooms that is started the game, and send messages to it's clients.
         }
