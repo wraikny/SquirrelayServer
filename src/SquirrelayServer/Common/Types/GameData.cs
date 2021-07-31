@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System;
 
 using MessagePack;
 
@@ -16,9 +16,7 @@ namespace SquirrelayServer.Common
 
             var other = (RoomPlayerStatus)obj;
 
-            if (Data is null && other.Data is null) return true;
-
-            return ((IStructuralEquatable)Data).Equals(other.Data, StructuralComparisons.StructuralEqualityComparer);
+            return Utils.GetStructualEquatable(Data, other.Data);
         }
 
         public override int GetHashCode()
@@ -38,6 +36,22 @@ namespace SquirrelayServer.Common
 
         [Key(2)]
         public byte[] Data { get; private set; }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is RelayedGameMessage)) return false;
+
+            var other = (RelayedGameMessage)obj;
+
+            return (ClientId == other.ClientId)
+                && (ElapsedSecond == other.ElapsedSecond)
+                && Utils.GetStructualEquatable(Data, other.Data);
+
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(ClientId, ElapsedSecond, Data);
+        }
 
         [SerializationConstructor]
         public RelayedGameMessage(ulong clientId, float elapsedSecond, byte[] data)

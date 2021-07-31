@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections;
+using System.Collections.Generic;
 
 using MessagePack;
 
@@ -29,7 +31,19 @@ namespace SquirrelayServer.Tests
             {
                 var aValue = p.GetValue(value);
                 var bValue = p.GetValue(obj);
-                Assert.True((aValue is null && bValue is null) || (aValue.Equals(bValue)));
+
+                if ((aValue is null && bValue is null))
+                {
+                    Assert.True(true);
+                }
+                else if (aValue is IEnumerable<object> a && bValue is IEnumerable<object> b)
+                {
+                    Assert.True(Enumerable.SequenceEqual(a, b));
+                }
+                else
+                {
+                    Assert.Equal(aValue, bValue);
+                }
             }
         }
 
@@ -77,13 +91,71 @@ namespace SquirrelayServer.Tests
             Check<IServerMsg.ExitRoomResponse, IServerMsg>(IServerMsg.ExitRoomResponse.Success);
         }
 
-        // TODO: ServerMsg_OperateRoomResponse
+        [Fact]
+        public void ServerMsg_OperateRoomResponse()
+        {
+            Check<IServerMsg.OperateRoomResponse, IServerMsg>(IServerMsg.OperateRoomResponse.Success);
+            Check<IServerMsg.OperateRoomResponse, IServerMsg>(IServerMsg.OperateRoomResponse.PlayerOutOfRoom);
+            Check<IServerMsg.OperateRoomResponse, IServerMsg>(IServerMsg.OperateRoomResponse.PlayerIsNotOwner);
+            Check<IServerMsg.OperateRoomResponse, IServerMsg>(IServerMsg.OperateRoomResponse.InvalidRoomStatus);
+        }
 
-        // TODO: ServerMsg_SendGameMessageResponse
+        [Fact]
+        public void ServerMsg_SendGameMessageResponse()
+        {
+            Check<IServerMsg.SendGameMessageResponse, IServerMsg>(IServerMsg.SendGameMessageResponse.Success);
+            Check<IServerMsg.SendGameMessageResponse, IServerMsg>(IServerMsg.SendGameMessageResponse.PlayerOutOfRoom);
+            Check<IServerMsg.SendGameMessageResponse, IServerMsg>(IServerMsg.SendGameMessageResponse.InvalidRoomStatus);
+        }
 
-        // TODO: ServerMsg_UpdateRoomPlayers
+        [Fact]
+        public void ServerMsg_UpdateRoomPlayers()
+        {
+            {
+                ulong? owner = null;
+                var statuses = new Dictionary<ulong, RoomPlayerStatus>();
+                Check<IServerMsg.UpdateRoomPlayers, IServerMsg>(new IServerMsg.UpdateRoomPlayers(owner, statuses));
+            }
 
-        // TODO: ServerMsg_DistributeGameMessage
+            {
+                ulong? owner = 0uL;
+                var statuses = new Dictionary<ulong, RoomPlayerStatus>
+                {
+                    {
+                        0uL,
+                        new RoomPlayerStatus
+                        {
+                            Data = new byte[2],
+                        }
+                    },
+                    {
+                        1uL,
+                        new RoomPlayerStatus
+                        {
+                            Data = new byte[5],
+                        }
+                    }
+                };
+                Check<IServerMsg.UpdateRoomPlayers, IServerMsg>(new IServerMsg.UpdateRoomPlayers(owner, statuses));
+            }
+        }
+
+        [Fact]
+        public void ServerMsg_DistributeGameMessage()
+        {
+            {
+                var msgs = new List<RelayedGameMessage>();
+                Check<IServerMsg.DistributeGameMessage, IServerMsg>(new IServerMsg.DistributeGameMessage(msgs));
+            }
+
+            {
+                var msgs = new List<RelayedGameMessage>();
+                msgs.Add(new RelayedGameMessage(0uL, 1.0f, new byte[1]));
+                msgs.Add(new RelayedGameMessage(1uL, 1.1f, new byte[1]));
+                msgs.Add(new RelayedGameMessage(2uL, 0.0f, null));
+                Check<IServerMsg.DistributeGameMessage, IServerMsg>(new IServerMsg.DistributeGameMessage(msgs));
+            }
+        }
 
         [Fact]
         public void ClientMsg_SetPlayerStatus()
@@ -129,6 +201,13 @@ namespace SquirrelayServer.Tests
             Check<IClientMsg.OperateRoom, IClientMsg>(IClientMsg.OperateRoom.FinishPlaying);
         }
 
-        // TODO: ClientMsg_SendGameMessage
+        [Fact]
+        public void ClientMsg_SendGameMessage()
+        {
+            Check<IClientMsg.SendGameMessage, IClientMsg>(new IClientMsg.SendGameMessage(null));
+            Check<IClientMsg.SendGameMessage, IClientMsg>(new IClientMsg.SendGameMessage(new byte[0]));
+            Check<IClientMsg.SendGameMessage, IClientMsg>(new IClientMsg.SendGameMessage(new byte[1]));
+            Check<IClientMsg.SendGameMessage, IClientMsg>(new IClientMsg.SendGameMessage(new byte[2]));
+        }
     }
 }

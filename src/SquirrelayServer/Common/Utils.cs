@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections;
+using System.IO;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
@@ -45,6 +46,11 @@ namespace SquirrelayServer.Common
             if (v > max) return max;
 
             return v;
+        }
+
+        public static bool GetStructualEquatable(IStructuralEquatable a, IStructuralEquatable b)
+        {
+            return (a is null && b is null) || a.Equals(b, StructuralComparisons.StructuralEqualityComparer);
         }
     }
 }
