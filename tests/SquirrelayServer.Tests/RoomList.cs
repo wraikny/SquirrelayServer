@@ -131,5 +131,11 @@ namespace SquirrelayServer.Tests
             Assert.True(setPlayerStatusRes.IsSuccess);
             Assert.True(roomList.Rooms[roomCreatedRes.Id].PlayerStatuses.ContainsKey(playerMock0.Object.Id));
         }
+
+        // TODO: OperateRoom
+
+        // TODO: ReceiveGameMessage
+
+        // TODO: Update
     }
 }

@@ -77,6 +77,14 @@ namespace SquirrelayServer.Tests
             Check<IServerMsg.ExitRoomResponse, IServerMsg>(IServerMsg.ExitRoomResponse.Success);
         }
 
+        // TODO: ServerMsg_OperateRoomResponse
+
+        // TODO: ServerMsg_SendGameMessageResponse
+
+        // TODO: ServerMsg_UpdateRoomPlayers
+
+        // TODO: ServerMsg_DistributeGameMessage
+
         [Fact]
         public void ClientMsg_SetPlayerStatus()
         {
@@ -120,5 +128,7 @@ namespace SquirrelayServer.Tests
             Check<IClientMsg.OperateRoom, IClientMsg>(IClientMsg.OperateRoom.StartPlaying);
             Check<IClientMsg.OperateRoom, IClientMsg>(IClientMsg.OperateRoom.FinishPlaying);
         }
+
+        // TODO: ClientMsg_SendGameMessage
     }
 }
