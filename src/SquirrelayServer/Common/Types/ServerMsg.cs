@@ -82,7 +82,7 @@ namespace SquirrelayServer.Common
             }
 
             [Key(0)]
-            public ResultKind? Result { get; private set; }
+            public ResultKind Result { get; private set; }
 
             [Key(1)]
             public int Id { get; private set; }
