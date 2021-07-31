@@ -19,8 +19,13 @@ namespace SquirrelayServer.Server
     {
         private readonly Config _config;
         private readonly MessagePackSerializerOptions _options;
+
+        // key is peer id
         private readonly Dictionary<int, ClientHandler> _clients;
+
+        // key is client id
         private readonly Dictionary<ulong, ClientHandler> _clientsByClientId;
+
         private readonly RoomList _roomList;
         private readonly FPS _fps;
 
@@ -89,7 +94,7 @@ namespace SquirrelayServer.Server
             {
                 _manager.PollEvents();
 
-                _roomList.Update();
+                _roomList.Update(_clientsByClientId);
 
                 await _fps.Update();
             }
@@ -188,11 +193,17 @@ namespace SquirrelayServer.Server
                         client.Send(res);
                         break;
                     }
-                case IResponse _:
+                case IClientMsg.SendGameMessage m:
                     {
-                        client.Receive(clientMsg);
+                        var res = _roomList.ReceiveGameMessage(client, m);
+                        client.Send(res);
                         break;
                     }
+                //case IResponse _:
+                //    {
+                //        client.Receive(clientMsg);
+                //        break;
+                //    }
                 default:
                     break;
             }

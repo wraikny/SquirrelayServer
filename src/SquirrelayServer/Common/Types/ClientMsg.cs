@@ -11,10 +11,11 @@ namespace SquirrelayServer.Common
     [Union(3, typeof(EnterRoom))]
     [Union(4, typeof(ExitRoom))]
     [Union(5, typeof(OperateRoom))]
+    [Union(6, typeof(SendGameMessage))]
     public interface IClientMsg
     {
         [MessagePackObject]
-        public sealed class SetPlayerStatus : IClientMsg
+        public sealed class SetPlayerStatus : IClientMsg, IWithResponse<IServerMsg.SetPlayerStatusResponse>
         {
             [Key(0)]
             public RoomPlayerStatus Status { get; private set; }
@@ -30,6 +31,8 @@ namespace SquirrelayServer.Common
         public sealed class GetRoomList : IClientMsg, IWithResponse<IServerMsg.RoomListResponse>
         {
             public GetRoomList() { }
+
+            public static readonly GetRoomList Instance = new GetRoomList();
         }
 
         [MessagePackObject]
@@ -94,6 +97,19 @@ namespace SquirrelayServer.Common
 
             public static readonly OperateRoom StartPlaying = new OperateRoom(RoomOperateKind.StartPlaying);
             public static readonly OperateRoom FinishPlaying = new OperateRoom(RoomOperateKind.FinishPlaying);
+        }
+
+        [MessagePackObject]
+        public sealed class SendGameMessage : IClientMsg, IWithResponse<IServerMsg.SendGameMessageResponse>
+        {
+            [Key(0)]
+            public byte[] Data { get; private set; }
+
+            [SerializationConstructor]
+            public SendGameMessage(byte[] data)
+            {
+                Data = data;
+            }
         }
     }
 }

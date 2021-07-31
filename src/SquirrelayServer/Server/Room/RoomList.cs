@@ -40,11 +40,11 @@ namespace SquirrelayServer.Server
             _disposeIntervalStopWatch.Start();
         }
 
-        public void Update()
+        public void Update(IReadOnlyDictionary<ulong, ClientHandler> clients)
         {
             foreach (var (_, room) in _rooms)
             {
-                room.Update();
+                room.Update(clients);
             }
 
             // Update dispose
@@ -187,6 +187,17 @@ namespace SquirrelayServer.Server
             var room = _rooms[player.RoomId.Value];
 
             var res = room.OperateRoom(player.Id, msg.Operate);
+
+            return res;
+        }
+
+        public IServerMsg.SendGameMessageResponse ReceiveGameMessage(IPlayer player, IClientMsg.SendGameMessage msg)
+        {
+            if (player.RoomId is null) return IServerMsg.SendGameMessageResponse.PlayerOutOfRoom;
+
+            var room = _rooms[player.RoomId.Value];
+
+            var res = room.ReceiveGameMessage(player.Id, msg.Data);
 
             return res;
         }

@@ -57,7 +57,7 @@ namespace SquirrelayServer.Server
             _handler.Receive(msg);
         }
 
-        public void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableSequenced)
+        public void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered)
         {
             _handler.Send(msg, channel, method);
         }

@@ -15,7 +15,9 @@ namespace SquirrelayServer.Common
     [Union(4, typeof(EnterRoomResponse))]
     [Union(5, typeof(ExitRoomResponse))]
     [Union(6, typeof(OperateRoomResponse))]
-    [Union(7, typeof(UpdateRoomPlayers))]
+    [Union(7, typeof(SendGameMessageResponse))]
+    [Union(8, typeof(UpdateRoomPlayers))]
+    [Union(9, typeof(DistributeGameMessage))]
     public interface IServerMsg
     {
         [MessagePackObject]
@@ -35,25 +37,26 @@ namespace SquirrelayServer.Common
         [MessagePackObject]
         public sealed class SetPlayerStatusResponse : IServerMsg, IResponse
         {
-            public enum ErrorKind
+            public enum ResultKind
             {
-                PlayerOutOfRoom = 0,
+                Success = 0,
+                PlayerOutOfRoom = 1,
             }
 
             [Key(0)]
-            public ErrorKind? Error { get; private set; }
+            public ResultKind Result { get; private set; }
 
             [IgnoreMember]
-            public bool IsSuccess => Error is null;
+            public bool IsSuccess => Result == ResultKind.Success;
 
             [SerializationConstructor]
-            public SetPlayerStatusResponse(ErrorKind? error)
+            public SetPlayerStatusResponse(ResultKind result)
             {
-                Error = error;
+                Result = result;
             }
 
-            public static readonly SetPlayerStatusResponse PlayerOutOfRoom = new SetPlayerStatusResponse(ErrorKind.PlayerOutOfRoom);
-            public static readonly SetPlayerStatusResponse Success = new SetPlayerStatusResponse(null);
+            public static readonly SetPlayerStatusResponse Success = new SetPlayerStatusResponse(ResultKind.Success);
+            public static readonly SetPlayerStatusResponse PlayerOutOfRoom = new SetPlayerStatusResponse(ResultKind.PlayerOutOfRoom);
         }
 
         [MessagePackObject]
@@ -72,122 +75,154 @@ namespace SquirrelayServer.Common
         [MessagePackObject]
         public sealed class CreateRoomResponse : IServerMsg, IResponse
         {
-            public enum ErrorKind
+            public enum ResultKind
             {
-                AlreadyEntered = 0,
+                Success = 0,
+                AlreadyEntered = 1,
             }
 
             [Key(0)]
-            public ErrorKind? Error { get; private set; }
+            public ResultKind? Result { get; private set; }
 
             [Key(1)]
             public int Id { get; private set; }
 
             [IgnoreMember]
-            public bool IsSuccess => Error is null;
+            public bool IsSuccess => Result == ResultKind.Success;
 
             [SerializationConstructor]
-            public CreateRoomResponse(ErrorKind? error, int id)
+            public CreateRoomResponse(ResultKind kind, int id)
             {
-                Error = error;
+                Result = kind;
                 Id = id;
             }
 
-            public static readonly CreateRoomResponse AlreadyEntered = new CreateRoomResponse(ErrorKind.AlreadyEntered, 0);
-            public static CreateRoomResponse Success(int id) => new CreateRoomResponse(null, id);
+            public static CreateRoomResponse Success(int id) => new CreateRoomResponse(ResultKind.Success, id);
+            public static readonly CreateRoomResponse AlreadyEntered = new CreateRoomResponse(ResultKind.AlreadyEntered, 0);
         }
 
         [MessagePackObject]
         public sealed class EnterRoomResponse : IServerMsg, IResponse
         {
-            public enum ErrorKind
+            public enum ResultKind
             {
-                RoomNotFound = 0,
-                InvalidPassword = 1,
-                NumberOfPlayersLimitation = 2,
-                AlreadyEntered = 3,
+                Success = 0,
+                RoomNotFound = 1,
+                InvalidPassword = 2,
+                NumberOfPlayersLimitation = 3,
+                AlreadyEntered = 4,
             }
 
             [Key(0)]
-            public ErrorKind? Error { get; private set; }
+            public ResultKind Result { get; private set; }
 
             [Key(1)]
             public IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses { get; private set; }
 
             [IgnoreMember]
-            public bool IsSuccess => Error is null;
+            public bool IsSuccess => Result == ResultKind.Success;
+
 
             [SerializationConstructor]
-            public EnterRoomResponse(ErrorKind? error, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
+            public EnterRoomResponse(ResultKind result, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
             {
-                Error = error;
+                Result = result;
                 Statuses = statuses;
             }
 
-            public static readonly EnterRoomResponse RoomNotFound = new EnterRoomResponse(ErrorKind.RoomNotFound, null);
-            public static readonly EnterRoomResponse InvalidPassword = new EnterRoomResponse(ErrorKind.InvalidPassword, null);
-            public static readonly EnterRoomResponse NumberOfPlayersLimitation = new EnterRoomResponse(ErrorKind.NumberOfPlayersLimitation, null);
-            public static readonly EnterRoomResponse AlreadyEntered = new EnterRoomResponse(ErrorKind.AlreadyEntered, null);
             public static EnterRoomResponse Success(IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
-                => new EnterRoomResponse(null, statuses);
+                => new EnterRoomResponse(ResultKind.Success, statuses);
+            public static readonly EnterRoomResponse RoomNotFound = new EnterRoomResponse(ResultKind.RoomNotFound, null);
+            public static readonly EnterRoomResponse InvalidPassword = new EnterRoomResponse(ResultKind.InvalidPassword, null);
+            public static readonly EnterRoomResponse NumberOfPlayersLimitation = new EnterRoomResponse(ResultKind.NumberOfPlayersLimitation, null);
+            public static readonly EnterRoomResponse AlreadyEntered = new EnterRoomResponse(ResultKind.AlreadyEntered, null);
         }
 
         [MessagePackObject]
         public sealed class ExitRoomResponse : IServerMsg, IResponse
         {
 
-            public enum ErrorKind
+            public enum ResultKind
             {
-                PlayerOutOfRoom = 0,
+                Success = 0,
+                PlayerOutOfRoom = 1,
             }
 
             [Key(0)]
-            public ErrorKind? Error { get; private set; }
+            public ResultKind Result { get; private set; }
 
             [IgnoreMember]
-            public bool IsSuccess => Error is null;
+            public bool IsSuccess => Result == ResultKind.Success;
 
             [SerializationConstructor]
-            public ExitRoomResponse(ErrorKind? error)
+            public ExitRoomResponse(ResultKind result)
             {
-                Error = error;
+                Result = result;
             }
 
-            public static readonly ExitRoomResponse PlayerOutOfRoom = new ExitRoomResponse(ErrorKind.PlayerOutOfRoom);
-            public static readonly ExitRoomResponse Success = new ExitRoomResponse(null);
+            public static readonly ExitRoomResponse Success = new ExitRoomResponse(ResultKind.Success);
+            public static readonly ExitRoomResponse PlayerOutOfRoom = new ExitRoomResponse(ResultKind.PlayerOutOfRoom);
         }
 
         [MessagePackObject]
         public sealed class OperateRoomResponse : IServerMsg, IResponse
         {
-            public enum ErrorKind
+            public enum ResultKind
             {
-                PlayerOutOfRoom = 0,
-                PlayerIsNotOwner = 1,
+                Success = 0,
+                PlayerOutOfRoom = 1,
+                PlayerIsNotOwner = 2,
+                InvalidRoomStatus = 3,
+            }
+
+            [Key(0)]
+            public ResultKind Result { get; private set; }
+
+            [IgnoreMember]
+            public bool IsSuccess => Result == ResultKind.Success;
+
+            [SerializationConstructor]
+            public OperateRoomResponse(ResultKind result)
+            {
+                Result = result;
+            }
+
+            public static readonly OperateRoomResponse Success = new OperateRoomResponse(ResultKind.Success);
+            public static readonly OperateRoomResponse PlayerIsNotOwner = new OperateRoomResponse(ResultKind.PlayerIsNotOwner);
+            public static readonly OperateRoomResponse PlayerOutOfRoom = new OperateRoomResponse(ResultKind.PlayerOutOfRoom);
+            public static readonly OperateRoomResponse InvalidRoomStatus = new OperateRoomResponse(ResultKind.InvalidRoomStatus);
+
+        }
+
+        [MessagePackObject]
+        public sealed class SendGameMessageResponse : IServerMsg, IResponse
+        {
+            public enum ResultKind
+            {
+                Success = 0,
+                PlayerOutOfRoom = 1,
                 InvalidRoomStatus = 2,
             }
 
             [Key(0)]
-            public ErrorKind? Error { get; private set; }
+            public ResultKind Result { get; private set; }
 
             [IgnoreMember]
-            public bool IsSuccess => Error is null;
+            public bool IsSuccess => Result == ResultKind.Success;
 
             [SerializationConstructor]
-            public OperateRoomResponse(ErrorKind? error)
+            public SendGameMessageResponse(ResultKind result)
             {
-                Error = error;
+                Result = result;
             }
 
-            public static readonly OperateRoomResponse PlayerIsNotOwner = new OperateRoomResponse(ErrorKind.PlayerIsNotOwner);
-            public static readonly OperateRoomResponse PlayerOutOfRoom = new OperateRoomResponse(ErrorKind.PlayerOutOfRoom);
-            public static readonly OperateRoomResponse InvalidRoomStatus = new OperateRoomResponse(ErrorKind.InvalidRoomStatus);
-
-            public static OperateRoomResponse Success = new OperateRoomResponse(null);
+            public static readonly SendGameMessageResponse Success = new SendGameMessageResponse(ResultKind.Success);
+            public static readonly SendGameMessageResponse PlayerOutOfRoom = new SendGameMessageResponse(ResultKind.PlayerOutOfRoom);
+            public static readonly SendGameMessageResponse InvalidRoomStatus = new SendGameMessageResponse(ResultKind.InvalidRoomStatus);
         }
 
         [MessagePackObject]
-        public sealed class UpdateRoomPlayers
+        public sealed class UpdateRoomPlayers : IServerMsg
         {
             [Key(0)]
             public ulong? Owner { get; private set; }
@@ -200,6 +235,19 @@ namespace SquirrelayServer.Common
             {
                 Owner = owner;
                 Statuses = statuses;
+            }
+        }
+
+        [MessagePackObject]
+        public sealed class DistributeGameMessage : IServerMsg
+        {
+            [Key(0)]
+            public IReadOnlyList<RelayedGameMessage> Messages { get; private set; }
+
+            [SerializationConstructor]
+            public DistributeGameMessage(IReadOnlyList<RelayedGameMessage> messages)
+            {
+                Messages = messages;
             }
         }
     }

@@ -26,4 +26,25 @@ namespace SquirrelayServer.Common
             return Data.GetHashCode();
         }
     }
+
+    [MessagePackObject]
+    public sealed class RelayedGameMessage
+    {
+        [Key(0)]
+        public ulong ClientId { get; private set; }
+
+        [Key(1)]
+        public float ElapsedSecond { get; private set; }
+
+        [Key(2)]
+        public byte[] Data { get; private set; }
+
+        [SerializationConstructor]
+        public RelayedGameMessage(ulong clientId, float elapsedSecond, byte[] data)
+        {
+            ClientId = clientId;
+            ElapsedSecond = elapsedSecond;
+            Data = data;
+        }
+    }
 }

@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
+using LiteNetLib;
+
 using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Server
@@ -24,6 +26,11 @@ namespace SquirrelayServer.Server
 
         private readonly Stopwatch _disposeStopwatch;
 
+        private readonly Stopwatch _gameStopWatch;
+
+        private readonly List<RelayedGameMessage> _temporalGameMessageBuffer;
+
+
         internal IReadOnlyDictionary<ulong, RoomPlayerStatus> PlayerStatuses => _playersStatuses;
 
         public int Id { get; private set; }
@@ -39,8 +46,9 @@ namespace SquirrelayServer.Server
             _clientIds = new List<ulong>();
             _playersStatuses = new Dictionary<ulong, RoomPlayerStatus>();
             _statusUpdatedIds = new HashSet<ulong>();
-
             _disposeStopwatch = new Stopwatch();
+            _gameStopWatch = new Stopwatch();
+            _temporalGameMessageBuffer = new List<RelayedGameMessage>();
 
             Id = id;
             Info = info;
@@ -60,10 +68,35 @@ namespace SquirrelayServer.Server
             }
         }
 
-        public void Update()
+        public void Update(IReadOnlyDictionary<ulong, ClientHandler> clients)
         {
-            // TODO: status が playing のときにリレー処理を行う。
-            // playerのメッセージをためておくQueueも必要
+            void SendAll(IServerMsg msg)
+            {
+                foreach (var clientId in _clientIds)
+                {
+                    if (clients.TryGetValue(clientId, out var client))
+                    {
+                        client.Send(msg);
+                    }
+                }
+            }
+
+            // When playerstatuses is updated
+            if (_statusUpdatedIds.Count > 0)
+            {
+                var statuses = new Dictionary<ulong, RoomPlayerStatus>(_playersStatuses.Where((x) => _statusUpdatedIds.Contains(x.Key)));
+                var msg = new IServerMsg.UpdateRoomPlayers(_owner, statuses);
+                SendAll(msg);
+                _statusUpdatedIds.Clear();
+            }
+
+            // When the game is being played
+            if (RoomStatus == RoomStatus.Playing)
+            {
+                var msg = new IServerMsg.DistributeGameMessage(_temporalGameMessageBuffer);
+                SendAll(msg);
+                _temporalGameMessageBuffer.Clear();
+            }
         }
 
         public IServerMsg.SetPlayerStatusResponse SetPlayerStatus(ulong clientId, RoomPlayerStatus status)
@@ -141,6 +174,7 @@ namespace SquirrelayServer.Server
                         }
 
                         RoomStatus = RoomStatus.Playing;
+                        _gameStopWatch.Start();
 
                         break;
                     }
@@ -151,6 +185,7 @@ namespace SquirrelayServer.Server
                             return IServerMsg.OperateRoomResponse.InvalidRoomStatus;
                         }
 
+                        _gameStopWatch.Reset();
                         RoomStatus = RoomStatus.WaitingToPlay;
 
                         break;
@@ -160,6 +195,21 @@ namespace SquirrelayServer.Server
             }
 
             return IServerMsg.OperateRoomResponse.Success;
+        }
+
+        public IServerMsg.SendGameMessageResponse ReceiveGameMessage(ulong clientId, byte[] data)
+        {
+            if (RoomStatus != RoomStatus.Playing)
+            {
+                return IServerMsg.SendGameMessageResponse.InvalidRoomStatus;
+            }
+
+            // TODO
+            var msg = new RelayedGameMessage(clientId, Utils.MsToSec((int)_gameStopWatch.ElapsedMilliseconds), data);
+
+            _temporalGameMessageBuffer.Add(msg);
+
+            return IServerMsg.SendGameMessageResponse.Success;
         }
     }
 }
