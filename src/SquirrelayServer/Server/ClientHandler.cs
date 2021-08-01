@@ -12,10 +12,16 @@ using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Server
 {
+
+    internal interface IClientHandler
+    {
+        void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered);
+    }
+
     /// <summary>
     /// Class that sends and receives messages for each client
     /// </summary>
-    internal sealed class ClientHandler : IPlayer
+    internal sealed class ClientHandler : IPlayer, IClientHandler
     {
         private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
 
@@ -52,10 +58,10 @@ namespace SquirrelayServer.Server
             };
         }
 
-        public void Receive(IClientMsg msg)
-        {
-            _handler.Receive(msg);
-        }
+        //public void Receive(IClientMsg msg)
+        //{
+        //    _handler.Receive(msg);
+        //}
 
         public void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered)
         {

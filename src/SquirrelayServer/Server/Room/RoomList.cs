@@ -40,7 +40,8 @@ namespace SquirrelayServer.Server
             _disposeIntervalStopWatch.Start();
         }
 
-        public void Update(IReadOnlyDictionary<ulong, ClientHandler> clients)
+        public void Update<T>(IReadOnlyDictionary<ulong, T> clients)
+            where T: IClientHandler
         {
             foreach (var (_, room) in _rooms)
             {

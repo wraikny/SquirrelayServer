@@ -24,8 +24,10 @@ namespace SquirrelayServer.Server
         private readonly Dictionary<ulong, RoomPlayerStatus> _playersStatuses;
         private readonly HashSet<ulong> _statusUpdatedIds;
 
+        // StopWatch to count the time when Room is disposed.
         private readonly Stopwatch _disposeStopwatch;
 
+        // StopWatch for counting game time.
         private readonly Stopwatch _gameStopWatch;
 
         private readonly List<RelayedGameMessage> _temporalGameMessageBuffer;
@@ -68,7 +70,8 @@ namespace SquirrelayServer.Server
             }
         }
 
-        public void Update(IReadOnlyDictionary<ulong, ClientHandler> clients)
+        public void Update<T>(IReadOnlyDictionary<ulong, T> clients)
+            where T: IClientHandler
         {
             void SendAll(IServerMsg msg)
             {
@@ -204,7 +207,6 @@ namespace SquirrelayServer.Server
                 return IServerMsg.SendGameMessageResponse.InvalidRoomStatus;
             }
 
-            // TODO
             var msg = new RelayedGameMessage(clientId, Utils.MsToSec((int)_gameStopWatch.ElapsedMilliseconds), data);
 
             _temporalGameMessageBuffer.Add(msg);

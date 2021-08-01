@@ -6,7 +6,7 @@ namespace SquirrelayServer.Common
 {
     public interface ISender<T>
     {
-        void Send<U>(U message, byte channelNumber, DeliveryMethod deliveryMethod) where U : T;
+        void Send<U>(U message, byte channelNumber = 0, DeliveryMethod deliveryMethod = DeliveryMethod.ReliableOrdered) where U : T;
     }
 
     /// <summary>

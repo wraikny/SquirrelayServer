@@ -20,31 +20,13 @@ namespace SquirrelayServer.Tests
             _ = await Config.LoadFromFileAsync(@"config/config.json");
         }
 
-        private static void Check<T, U>(T value)
+        internal static void Check<T, U>(T value)
             where T : U
         {
             var memory = new ReadOnlyMemory<byte>(MessagePackSerializer.Serialize<U>(value, Options.DefaultOptions));
             var obj = (T)MessagePackSerializer.Deserialize<U>(memory, Options.DefaultOptions);
 
-            var props = typeof(T).GetProperties().Where(p => Attribute.IsDefined(p, typeof(KeyAttribute)));
-            foreach (var p in props)
-            {
-                var aValue = p.GetValue(value);
-                var bValue = p.GetValue(obj);
-
-                if ((aValue is null && bValue is null))
-                {
-                    Assert.True(true);
-                }
-                else if (aValue is IEnumerable<object> a && bValue is IEnumerable<object> b)
-                {
-                    Assert.True(Enumerable.SequenceEqual(a, b));
-                }
-                else
-                {
-                    Assert.Equal(aValue, bValue);
-                }
-            }
+            Utils.CheckEquality(value, obj);
         }
 
         [Fact]

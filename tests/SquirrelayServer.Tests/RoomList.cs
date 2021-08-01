@@ -26,14 +26,19 @@ namespace SquirrelayServer.Tests
             GeneratedRoomIdRange = (1000, 9999),
         };
 
-        [Fact]
-        public void CreateRoom()
+        private static Mock<Server.IPlayer> CreatePlayerMock(ulong id)
         {
-            var roomList = new Server.RoomList(GetRoomConfig());
+            var p = new Mock<Server.IPlayer>();
+            p.SetupGet(p => p.Id).Returns(id);
+            p.SetupProperty(p => p.RoomId, null);
+            return p;
+        }
 
-            var playerMock0 = new Mock<Server.IPlayer>();
-            playerMock0.SetupProperty(p => p.RoomId, null);
-            playerMock0.SetupGet(p => p.Id).Returns(0);
+        private static (Server.RoomList, Mock<Server.IPlayer>, int) CreateRoomWithOnePlayer(RoomConfig config)
+        {
+            var roomList = new Server.RoomList(config);
+
+            var playerMock0 = CreatePlayerMock(0);
 
             var createRoom = new IClientMsg.CreateRoom(true, null, 6, "");
 
@@ -41,38 +46,32 @@ namespace SquirrelayServer.Tests
             Assert.True(roomCreatedRes.IsSuccess);
 
             var info = roomList.GetRoomListInfo();
-            Assert.True(playerMock0.Object.RoomId == roomCreatedRes.Id);
-            Assert.True(info.Info.Count == 1);
-            Assert.True(info.Info.First().NumberOfPlayers == 1);
+            Assert.Equal(playerMock0.Object.RoomId, roomCreatedRes.Id);
+            Assert.Equal(1, info.Info.Count);
+            Assert.Equal(1, info.Info.First().NumberOfPlayers);
+
+            return (roomList, playerMock0, roomCreatedRes.Id);
+        }
+
+        [Fact]
+        public void CreateRoom()
+        {
+            _ = CreateRoomWithOnePlayer(GetRoomConfig());
         }
 
         [Fact]
         public void EnterRoom()
         {
-            var roomList = new Server.RoomList(GetRoomConfig());
-
-            var playerMock0 = new Mock<Server.IPlayer>();
-            playerMock0.SetupProperty(p => p.RoomId, null);
-            playerMock0.SetupGet(p => p.Id).Returns(0);
-
-            var createRoom = new IClientMsg.CreateRoom(true, null, 6, "");
-
-            var roomCreatedRes = roomList.CreateRoom(playerMock0.Object, createRoom);
-
+            var (roomList, _, roomId) = CreateRoomWithOnePlayer(GetRoomConfig());
             var info = roomList.GetRoomListInfo();
-            Assert.True(playerMock0.Object.RoomId == roomCreatedRes.Id);
-            Assert.True(info.Info.Count == 1);
-            Assert.True(info.Info.First().NumberOfPlayers == 1);
 
-            var playerMock1 = new Mock<Server.IPlayer>();
-            playerMock1.SetupProperty(p => p.RoomId, null);
-            playerMock1.SetupGet(p => p.Id).Returns(1);
+            var playerMock1 = CreatePlayerMock(1);
 
-            var enterRoom = new IClientMsg.EnterRoom(roomCreatedRes.Id, null);
+            var enterRoom = new IClientMsg.EnterRoom(roomId, null);
 
             roomList.EnterRoom(playerMock1.Object, enterRoom);
-            Assert.True(playerMock1.Object.RoomId == roomCreatedRes.Id);
-            Assert.True(info.Info.First().NumberOfPlayers == 2);
+            Assert.Equal(playerMock1.Object.RoomId, roomId);
+            Assert.Equal(2, info.Info.First().NumberOfPlayers);
         }
 
         [Fact]
@@ -80,62 +79,87 @@ namespace SquirrelayServer.Tests
         {
             var config = GetRoomConfig();
             config.DisposeSecondWhileNoMember = 0.0f;
-            var roomList = new Server.RoomList(config);
-
-            var playerMock0 = new Mock<Server.IPlayer>();
-            playerMock0.SetupProperty(p => p.RoomId, null);
-            playerMock0.SetupGet(p => p.Id).Returns(0);
-
-            var createRoom = new IClientMsg.CreateRoom(true, null, 6, "");
-
-            var roomCreatedRes = roomList.CreateRoom(playerMock0.Object, createRoom);
-            Assert.True(roomCreatedRes.IsSuccess);
-
+            var (roomList, playerMock0, _) = CreateRoomWithOnePlayer(config);
             var info = roomList.GetRoomListInfo();
-            Assert.True(playerMock0.Object.RoomId == roomCreatedRes.Id);
-            Assert.True(info.Info.Count == 1);
-            Assert.True(info.Info.First().NumberOfPlayers == 1);
-
 
             roomList.ExitRoom(playerMock0.Object);
             Assert.True(playerMock0.Object.RoomId is null);
-            Assert.True(info.Info.Count == 1);
-            Assert.True(info.Info.First().NumberOfPlayers == 0);
+            Assert.Equal(1, info.Info.Count);
+            Assert.Equal(0, info.Info.First().NumberOfPlayers);
 
             roomList.UpdateDisposeStatus();
-            Assert.True(info.Info.Count == 0);
+            Assert.Equal(0, info.Info.Count);
         }
 
         [Fact]
         public void SetPlayerStatus()
         {
-            var roomList = new Server.RoomList(GetRoomConfig());
-
-            var playerMock0 = new Mock<Server.IPlayer>();
-            playerMock0.SetupProperty(p => p.RoomId, null);
-            playerMock0.SetupGet(p => p.Id).Returns(0);
-
-            var createRoom = new IClientMsg.CreateRoom(true, null, 6, "");
-
-            var roomCreatedRes = roomList.CreateRoom(playerMock0.Object, createRoom);
-            Assert.True(roomCreatedRes.IsSuccess);
-
-            var info = roomList.GetRoomListInfo();
-            Assert.True(playerMock0.Object.RoomId == roomCreatedRes.Id);
-            Assert.True(info.Info.Count == 1);
-            Assert.True(info.Info.First().NumberOfPlayers == 1);
+            var (roomList, playerMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig());
 
             var playerStatus = new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = new byte[0] });
             var setPlayerStatusRes = roomList.SetPlayerStatus(playerMock0.Object, playerStatus);
 
             Assert.True(setPlayerStatusRes.IsSuccess);
-            Assert.True(roomList.Rooms[roomCreatedRes.Id].PlayerStatuses.ContainsKey(playerMock0.Object.Id));
+            Assert.True(roomList.Rooms[roomId].PlayerStatuses.ContainsKey(playerMock0.Object.Id));
         }
 
-        // TODO: OperateRoom
+        [Fact]
+        public void OperateRoom()
+        {
+            var (roomList, playerMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig());
 
-        // TODO: ReceiveGameMessage
+            var startPlaying = IClientMsg.OperateRoom.StartPlaying;
+            var startPlayingRes = roomList.OperateRoom(playerMock0.Object, startPlaying);
+            Assert.True(startPlayingRes.IsSuccess);
 
-        // TODO: Update
+            var room = roomList.Rooms[roomId];
+            Assert.Equal(Server.RoomStatus.Playing, room.RoomStatus);
+
+            var finishPlaying = IClientMsg.OperateRoom.FinishPlaying;
+            var finishPlayingRes = roomList.OperateRoom(playerMock0.Object, finishPlaying);
+            Assert.True(finishPlayingRes.IsSuccess);
+        }
+
+        [Fact]
+        public void ReceiveGameMessage()
+        {
+            var (roomList, playerMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig());
+
+            roomList.OperateRoom(playerMock0.Object, IClientMsg.OperateRoom.StartPlaying);
+
+            var msg0 = new IClientMsg.SendGameMessage(new byte[] { 0, 1, 2, 3, 4, 5 });
+            roomList.ReceiveGameMessage(playerMock0.Object, msg0);
+
+            var msg1 = new IClientMsg.SendGameMessage(new byte[] { 8, 7, 6, 5, 4 });
+            roomList.ReceiveGameMessage(playerMock0.Object, msg1);
+
+            var handlerCheckPassed = false;
+
+            var playerMock0Handler = new Mock<Server.IClientHandler>();
+            playerMock0Handler.Setup(s => s.Send(It.IsAny<IServerMsg>(), It.IsAny<byte>(), It.IsAny<LiteNetLib.DeliveryMethod>()))
+                .Callback((IServerMsg message, byte channelNumber, LiteNetLib.DeliveryMethod deliveryMethod) =>
+                {
+                    if (message is IServerMsg.DistributeGameMessage msg)
+                    {
+                        Assert.Equal(msg.Messages[0].ClientId, playerMock0.Object.Id);
+                        Assert.True(Enumerable.SequenceEqual(msg.Messages[0].Data, msg0.Data));
+                        Assert.True(Enumerable.SequenceEqual(msg.Messages[1].Data, msg1.Data));
+                        handlerCheckPassed = true;
+                    }
+                    else
+                    {
+                        Assert.True(false);
+                    }
+                });
+
+            var handlers = new Dictionary<ulong, Server.IClientHandler>
+            {
+                { playerMock0.Object.Id, playerMock0Handler.Object }
+            };
+
+            roomList.Update(handlers);
+
+            Assert.True(handlerCheckPassed);
+        }
     }
 }
