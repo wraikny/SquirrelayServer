@@ -13,7 +13,7 @@ using SquirrelayServer.Common;
 namespace SquirrelayServer.Server
 {
 
-    internal interface IClientHandler
+    public interface IClientHandler
     {
         void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered);
     }
