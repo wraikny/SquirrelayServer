@@ -71,7 +71,7 @@ namespace SquirrelayServer.Server
         }
 
         public void Update<T>(IReadOnlyDictionary<ulong, T> clients)
-            where T: IClientHandler
+            where T : IClientHandler
         {
             void SendAll(IServerMsg msg)
             {

@@ -41,7 +41,7 @@ namespace SquirrelayServer.Server
         }
 
         public void Update<T>(IReadOnlyDictionary<ulong, T> clients)
-            where T: IClientHandler
+            where T : IClientHandler
         {
             foreach (var (_, room) in _rooms)
             {
