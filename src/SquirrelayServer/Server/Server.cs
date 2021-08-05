@@ -44,7 +44,7 @@ namespace SquirrelayServer.Server
             _clients = new Dictionary<int, ClientHandler>();
             _clientsByClientId = new Dictionary<ulong, ClientHandler>();
 
-            _roomList = new RoomList(config.RoomConfig);
+            _roomList = new RoomList(config.RoomConfig, options);
 
             _fps = new FPS(config.NetConfig.UpdateTime);
 

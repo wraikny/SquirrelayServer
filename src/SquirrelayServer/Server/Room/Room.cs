@@ -6,6 +6,8 @@ using System.Text;
 
 using LiteNetLib;
 
+using MessagePack;
+
 using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Server
@@ -70,16 +72,18 @@ namespace SquirrelayServer.Server
             }
         }
 
-        public void Update<T>(IReadOnlyDictionary<ulong, T> clients)
+        public void Update<T>(IReadOnlyDictionary<ulong, T> clients, MessagePackSerializerOptions options)
             where T : IClientHandler
         {
             void SendAll(IServerMsg msg)
             {
+                var data = MessagePackSerializer.Serialize(msg, options);
+
                 foreach (var clientId in _clientIds)
                 {
                     if (clients.TryGetValue(clientId, out var client))
                     {
-                        client.Send(msg);
+                        client.SendByte(data);
                     }
                 }
             }
@@ -130,6 +134,7 @@ namespace SquirrelayServer.Server
         {
             if (Password is string p && p != password) return IServerMsg.EnterRoomResponse.InvalidPassword;
             if (Info.MaxNumberOfPlayers == _clientIds.Count) return IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation;
+            if (RoomStatus == RoomStatus.Playing) return IServerMsg.EnterRoomResponse.InvalidRoomStatus;
             if (_clientIds.Contains(clientId)) return IServerMsg.EnterRoomResponse.AlreadyEntered;
 
             EnterRoomWithoutCheck(clientId);

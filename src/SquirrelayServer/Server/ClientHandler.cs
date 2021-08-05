@@ -16,6 +16,8 @@ namespace SquirrelayServer.Server
     public interface IClientHandler
     {
         void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered);
+
+        void SendByte(byte[] data, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered);
     }
 
     /// <summary>
@@ -43,16 +45,12 @@ namespace SquirrelayServer.Server
             }
         }
 
-        public int Latency
-        {
-            get => _handler.Latency;
-            set => _handler.Latency = value;
-        }
+        public int Latency { get; internal set; }
 
         public ClientHandler(ulong id, NetPeerSender<IServerMsg> sender)
         {
-            var subject = Subject.Synchronize(new Subject<IClientMsg>());
-            _handler = new MessageHandler<IServerMsg, IClientMsg>(subject, sender)
+            //var subject = Subject.Synchronize(new Subject<IClientMsg>());
+            _handler = new MessageHandler<IServerMsg, IClientMsg>(null, sender)
             {
                 Id = id,
             };
@@ -66,6 +64,11 @@ namespace SquirrelayServer.Server
         public void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered)
         {
             _handler.Send(msg, channel, method);
+        }
+
+        public void SendByte(byte[] data, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered)
+        {
+            _handler.SendByte(data, channel, method);
         }
     }
 }

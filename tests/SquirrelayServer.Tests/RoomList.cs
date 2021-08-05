@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using MessagePack;
+
 using Moq;
 
 using SquirrelayServer;
@@ -34,9 +36,9 @@ namespace SquirrelayServer.Tests
             return p;
         }
 
-        private static (Server.RoomList, Mock<Server.IPlayer>, int) CreateRoomWithOnePlayer(RoomConfig config)
+        private static (Server.RoomList, Mock<Server.IPlayer>, int) CreateRoomWithOnePlayer(RoomConfig config, MessagePackSerializerOptions options)
         {
-            var roomList = new Server.RoomList(config);
+            var roomList = new Server.RoomList(config, options);
 
             var playerMock0 = CreatePlayerMock(0);
 
@@ -56,13 +58,13 @@ namespace SquirrelayServer.Tests
         [Fact]
         public void CreateRoom()
         {
-            _ = CreateRoomWithOnePlayer(GetRoomConfig());
+            _ = CreateRoomWithOnePlayer(GetRoomConfig(), Options.DefaultOptions);
         }
 
         [Fact]
         public void EnterRoom()
         {
-            var (roomList, _, roomId) = CreateRoomWithOnePlayer(GetRoomConfig());
+            var (roomList, _, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), Options.DefaultOptions);
             var info = roomList.GetRoomListInfo();
 
             var playerMock1 = CreatePlayerMock(1);
@@ -79,7 +81,7 @@ namespace SquirrelayServer.Tests
         {
             var config = GetRoomConfig();
             config.DisposeSecondWhileNoMember = 0.0f;
-            var (roomList, playerMock0, _) = CreateRoomWithOnePlayer(config);
+            var (roomList, playerMock0, _) = CreateRoomWithOnePlayer(config, Options.DefaultOptions);
             var info = roomList.GetRoomListInfo();
 
             roomList.ExitRoom(playerMock0.Object);
@@ -94,7 +96,7 @@ namespace SquirrelayServer.Tests
         [Fact]
         public void SetPlayerStatus()
         {
-            var (roomList, playerMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig());
+            var (roomList, playerMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), Options.DefaultOptions);
 
             var playerStatus = new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = new byte[0] });
             var setPlayerStatusRes = roomList.SetPlayerStatus(playerMock0.Object, playerStatus);
@@ -106,7 +108,7 @@ namespace SquirrelayServer.Tests
         [Fact]
         public void OperateRoom()
         {
-            var (roomList, playerMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig());
+            var (roomList, playerMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), Options.DefaultOptions);
 
             var startPlaying = IClientMsg.OperateRoom.StartPlaying;
             var startPlayingRes = roomList.OperateRoom(playerMock0.Object, startPlaying);
@@ -123,7 +125,9 @@ namespace SquirrelayServer.Tests
         [Fact]
         public void ReceiveGameMessage()
         {
-            var (roomList, playerMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig());
+            var options = Options.DefaultOptions;
+
+            var (roomList, playerMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), options);
 
             roomList.OperateRoom(playerMock0.Object, IClientMsg.OperateRoom.StartPlaying);
 
@@ -150,6 +154,13 @@ namespace SquirrelayServer.Tests
                     {
                         Assert.True(false);
                     }
+                });
+
+            playerMock0Handler.Setup(s => s.SendByte(It.IsAny<byte[]>(), It.IsAny<byte>(), It.IsAny<LiteNetLib.DeliveryMethod>()))
+                .Callback((byte[] data, byte channelNumber, LiteNetLib.DeliveryMethod deliveryMethod) =>
+                {
+                    var msg = MessagePackSerializer.Deserialize<IServerMsg>(data, options);
+                    playerMock0Handler.Object.Send(msg, channelNumber, deliveryMethod);
                 });
 
             var handlers = new Dictionary<ulong, Server.IClientHandler>

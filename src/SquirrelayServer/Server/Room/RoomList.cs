@@ -6,15 +6,19 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using MessagePack;
+
 using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Server
 {
     internal sealed class RoomList
     {
-        private readonly Random _rand;
-
         private readonly RoomConfig _roomConfig;
+
+        private readonly MessagePackSerializerOptions _serializerOptions;
+
+        private readonly Random _rand;
 
         private readonly Dictionary<int, RoomInfo> _roomInfoList;
         private readonly Dictionary<int, Room> _rooms;
@@ -24,15 +28,16 @@ namespace SquirrelayServer.Server
         private readonly Stopwatch _disposeIntervalStopWatch;
 
 
-        public RoomList(RoomConfig roomConfig)
+        public RoomList(RoomConfig roomConfig, MessagePackSerializerOptions serializerOptions)
         {
-            _rand = new Random();
             _roomConfig = roomConfig;
+            _serializerOptions = serializerOptions;
 
             _rooms = new Dictionary<int, Room>();
             _roomInfoList = new Dictionary<int, RoomInfo>();
 
             _disposeIntervalStopWatch = new Stopwatch();
+            _rand = new Random();
         }
 
         public void Start()
@@ -45,7 +50,7 @@ namespace SquirrelayServer.Server
         {
             foreach (var (_, room) in _rooms)
             {
-                room.Update(clients);
+                room.Update(clients, _serializerOptions);
             }
 
             // Update dispose

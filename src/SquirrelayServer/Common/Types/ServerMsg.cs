@@ -111,6 +111,7 @@ namespace SquirrelayServer.Common
                 InvalidPassword = 2,
                 NumberOfPlayersLimitation = 3,
                 AlreadyEntered = 4,
+                InvalidRoomStatus = 5,
             }
 
             [Key(0)]
@@ -136,6 +137,7 @@ namespace SquirrelayServer.Common
             public static readonly EnterRoomResponse InvalidPassword = new EnterRoomResponse(ResultKind.InvalidPassword, null);
             public static readonly EnterRoomResponse NumberOfPlayersLimitation = new EnterRoomResponse(ResultKind.NumberOfPlayersLimitation, null);
             public static readonly EnterRoomResponse AlreadyEntered = new EnterRoomResponse(ResultKind.AlreadyEntered, null);
+            public static readonly EnterRoomResponse InvalidRoomStatus = new EnterRoomResponse(ResultKind.InvalidRoomStatus, null);
         }
 
         [MessagePackObject]

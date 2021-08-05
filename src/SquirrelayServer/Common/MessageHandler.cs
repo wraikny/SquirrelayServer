@@ -11,7 +11,7 @@ namespace SquirrelayServer.Common
     /// <summary>
     /// Class to manage sending and receiving of messages
     /// </summary>
-    internal sealed class MessageHandler<TSend, TRecv>
+    internal sealed class MessageHandler<TSend, TRecv> : ISender<TSend>
         where TSend : class
         where TRecv : class
     {
@@ -20,7 +20,6 @@ namespace SquirrelayServer.Common
         private readonly ISender<TSend> _sender;
 
         public ulong? Id { get; set; }
-        public int Latency { get; internal set; }
 
         public MessageHandler(ISubject<TRecv> subject, ISender<TSend> sender)
         {
@@ -48,10 +47,14 @@ namespace SquirrelayServer.Common
         /// <summary>
         /// Send a message
         /// </summary>
-        public void Send<USend>(USend msg, byte channelNumber, DeliveryMethod method)
-            where USend : class, TSend
+        public void Send(TSend msg, byte channelNumber, DeliveryMethod method)
         {
             _sender.Send(msg, channelNumber, method);
+        }
+
+        public void SendByte(byte[] data, byte channel, DeliveryMethod method)
+        {
+            _sender.SendByte(data, channel, method);
         }
 
         /// <summary>
