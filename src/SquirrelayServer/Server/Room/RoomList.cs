@@ -27,6 +27,7 @@ namespace SquirrelayServer.Server
 
         private readonly Stopwatch _disposeIntervalStopWatch;
 
+        internal Dictionary<int, RoomInfo> RoomInfoList => _roomInfoList;
 
         public RoomList(RoomConfig roomConfig, MessagePackSerializerOptions serializerOptions)
         {
@@ -45,18 +46,17 @@ namespace SquirrelayServer.Server
             _disposeIntervalStopWatch.Start();
         }
 
-        public void Update<T>(IReadOnlyDictionary<ulong, T> clients)
-            where T : IClientHandler
+        public void Update()
         {
             foreach (var (_, room) in _rooms)
             {
-                room.Update(clients, _serializerOptions);
+                room.Update();
             }
 
             // Update dispose
             var disposeSecond = Utils.MsToSec((int)_disposeIntervalStopWatch.ElapsedMilliseconds);
 
-            if (disposeSecond >= _roomConfig.UpdatingDisposeStatusIntervalSecond)
+            if (disposeSecond >= _roomConfig.UpdatingDisposeStatusIntervalSeconds)
             {
                 UpdateDisposeStatus();
                 _disposeIntervalStopWatch.Restart();
@@ -77,7 +77,7 @@ namespace SquirrelayServer.Server
 
             var removeIds = _rooms.Where(x =>
                 x.Value.DeltaSecondToDispose is float t
-                && (x.Value.RoomStatus == RoomStatus.OwnerExited && t > _roomConfig.DisposeSecondWhileNoMember)
+                && (x.Value.RoomStatus == RoomStatus.OwnerExited && t > _roomConfig.DisposeSecondsWhenNoMember)
             ).Select(x => x.Key).ToArray();
 
             foreach (var id in removeIds)
@@ -99,41 +99,26 @@ namespace SquirrelayServer.Server
             return roomId;
         }
 
-        public IServerMsg.SetPlayerStatusResponse SetPlayerStatus(IPlayer player, IClientMsg.SetPlayerStatus msg)
+        public IServerMsg.RoomListResponse GetRoomInfoList()
         {
-            if (player.RoomId is null)
-            {
-                return IServerMsg.SetPlayerStatusResponse.PlayerOutOfRoom;
-            }
-
-            var room = _rooms[player.RoomId.Value];
-
-            return room.SetPlayerStatus(player.Id, msg.Status);
+            return new IServerMsg.RoomListResponse(_roomInfoList.Values.Where(x => x.IsVisible).ToArray());
         }
 
-        private IServerMsg.RoomListResponse _roomListResponseCache;
-
-        public IServerMsg.RoomListResponse GetRoomListInfo()
-        {
-            _roomListResponseCache ??= new IServerMsg.RoomListResponse(_roomInfoList.Values);
-            return _roomListResponseCache;
-        }
-
-        public IServerMsg.CreateRoomResponse CreateRoom(IPlayer player, IClientMsg.CreateRoom msg)
+        public IServerMsg.CreateRoomResponse CreateRoom(IClientHandler client, IClientMsg.CreateRoom msg)
         {
             // is not null
-            if (player.RoomId is { })
+            if (client.RoomId is { })
             {
                 return IServerMsg.CreateRoomResponse.AlreadyEntered;
             }
 
             var roomId = GenerateRoomId();
 
-            var maxRange = _roomConfig.MaxNumberOfPlayersRange;
+            var maxRange = _roomConfig.NumberOfPlayersRange;
 
             var roomInfo = new RoomInfo
             {
-                IsVisible = _roomConfig.InvisibleEnabled && msg.IsVisible,
+                IsVisible = _roomConfig.InvisibleEnabled ? msg.IsVisible : true,
                 MaxNumberOfPlayers = Utils.Clamp(msg.MaxNumberOfPlayers, maxRange.Item1, maxRange.Item2),
                 NumberOfPlayers = 0,
                 Message = _roomConfig.RoomMessageEnabled ? msg.Message : null,
@@ -141,42 +126,42 @@ namespace SquirrelayServer.Server
 
             var password = _roomConfig.PasswordEnabled ? msg.Password : null;
 
-            var room = new Room(roomId, roomInfo, password);
+            var room = new Room(_serializerOptions, roomId, roomInfo, password);
 
             _rooms[roomId] = room;
             _roomInfoList[roomId] = roomInfo;
 
-            room.EnterRoomWithoutCheck(player.Id);
+            room.EnterRoomWithoutCheck(client);
 
-            player.RoomId = roomId;
+            client.RoomId = roomId;
 
             return IServerMsg.CreateRoomResponse.Success(roomId);
         }
 
-        public IServerMsg.EnterRoomResponse EnterRoom(IPlayer player, IClientMsg.EnterRoom msg)
+        public IServerMsg.EnterRoomResponse EnterRoom(IClientHandler client, IClientMsg.EnterRoom msg)
         {
-            if (player.RoomId is { }) return IServerMsg.EnterRoomResponse.AlreadyEntered;
+            if (client.RoomId is { }) return IServerMsg.EnterRoomResponse.AlreadyEntered;
             if (!_rooms.TryGetValue(msg.RoomId, out var room)) return IServerMsg.EnterRoomResponse.RoomNotFound;
 
-            var res = room.EnterRoom(player.Id, msg.Password);
+            var res = room.EnterRoom(client, msg.Password);
 
             if (res.IsSuccess)
             {
-                player.RoomId = room.Id;
+                client.RoomId = room.Id;
             }
 
             return res;
         }
 
-        public IServerMsg.ExitRoomResponse ExitRoom(IPlayer player)
+        public IServerMsg.ExitRoomResponse ExitRoom(IClientHandler client)
         {
-            if (player.RoomId is int roomId)
+            if (client.RoomId is int roomId)
             {
                 var room = _rooms[roomId];
-                var res = room.ExitRoom(player.Id);
+                var res = room.ExitRoom(client);
                 if (res.IsSuccess)
                 {
-                    player.RoomId = null;
+                    client.RoomId = null;
                 }
                 return res;
             }
@@ -186,26 +171,38 @@ namespace SquirrelayServer.Server
             }
         }
 
-        public IServerMsg.OperateRoomResponse OperateRoom(IPlayer player, IClientMsg.OperateRoom msg)
+        public IServerMsg.OperateRoomResponse OperateRoom(IClientHandler client, IClientMsg.OperateRoom msg)
         {
-            if (player.RoomId is null) return IServerMsg.OperateRoomResponse.PlayerOutOfRoom;
+            if (client.RoomId is null) return IServerMsg.OperateRoomResponse.PlayerOutOfRoom;
 
-            var room = _rooms[player.RoomId.Value];
+            var room = _rooms[client.RoomId.Value];
 
-            var res = room.OperateRoom(player.Id, msg.Operate);
+            var res = room.OperateRoom(client, msg.Operate);
 
             return res;
         }
 
-        public IServerMsg.SendGameMessageResponse ReceiveGameMessage(IPlayer player, IClientMsg.SendGameMessage msg)
+        public IServerMsg.SendGameMessageResponse ReceiveGameMessage(IClientHandler client, IClientMsg.SendGameMessage msg)
         {
-            if (player.RoomId is null) return IServerMsg.SendGameMessageResponse.PlayerOutOfRoom;
+            if (client.RoomId is null) return IServerMsg.SendGameMessageResponse.PlayerOutOfRoom;
 
-            var room = _rooms[player.RoomId.Value];
+            var room = _rooms[client.RoomId.Value];
 
-            var res = room.ReceiveGameMessage(player.Id, msg.Data);
+            var res = room.ReceiveGameMessage(client, msg.Data);
 
             return res;
+        }
+
+        public IServerMsg.SetPlayerStatusResponse SetPlayerStatus(IClientHandler client, IClientMsg.SetPlayerStatus msg)
+        {
+            if (client.RoomId is null)
+            {
+                return IServerMsg.SetPlayerStatusResponse.PlayerOutOfRoom;
+            }
+
+            var room = _rooms[client.RoomId.Value];
+
+            return room.SetPlayerStatus(client, msg.Status);
         }
     }
 }

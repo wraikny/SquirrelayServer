@@ -31,8 +31,6 @@ namespace SquirrelayServer.Tests
 
         private MessageHandler<Msg, Msg> CreateMessageHandler()
         {
-            var subject = Subject.Synchronize(new Subject<Msg>());
-
             var sender = new Mock<ISender<Msg>>();
             sender.Setup(s => s.Send(It.IsAny<Msg>(), It.IsAny<byte>(), It.IsAny<LiteNetLib.DeliveryMethod>()))
                 .Callback((Msg message, byte channelNumber, LiteNetLib.DeliveryMethod deliveryMethod) =>
@@ -42,7 +40,7 @@ namespace SquirrelayServer.Tests
                     Assert.Equal(message.Message, deserialized.Message);
                 });
 
-            var handler = new MessageHandler<Msg, Msg>(subject, sender.Object);
+            var handler = new MessageHandler<Msg, Msg>(sender.Object);
             return handler;
         }
 
@@ -55,20 +53,65 @@ namespace SquirrelayServer.Tests
             handler.Send(msg, default, default);
         }
 
-        [Fact]
-        public async ValueTask WaitOfType()
+        [Fact(Timeout = 100)]
+        public async Task WaitOfType()
         {
             var handler = CreateMessageHandler();
 
-            var msg = new Msg("Recv Message");
+            {
+                var msg1 = new Msg("Recv Message");
+                var task = handler.WaitMsgOfType<Msg>();
+                handler.Receive(msg1);
+                var result = await task;
+
+                Assert.Equal(msg1.Message, result.Message);
+            }
+
+            {
+                var msg2 = new Msg("Recv Message 2");
+                var task = handler.WaitMsgOfType<Msg>();
+                handler.Receive(msg2);
+                var result = await task;
+
+                Assert.Equal(msg2.Message, result.Message);
+            }
+        }
+
+        [Fact]
+        public async Task Cancel()
+        {
+            var handler = CreateMessageHandler();
 
             var task = handler.WaitMsgOfType<Msg>();
 
-            handler.Receive(msg);
+            handler.Cancel();
 
-            await Task.Delay(2);
+            await Task.Delay(1);
 
-            Assert.True(task.IsCompletedSuccessfully);
+            Assert.True(task.IsCanceled);
+        }
+
+        [Fact(Timeout = 100)]
+        public async Task AwaitCanceledTask()
+        {
+            var handler = CreateMessageHandler();
+
+            var task = handler.WaitMsgOfType<Msg>();
+
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(2);
+                handler.Cancel();
+            });
+
+            await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            {
+                var msg = await task;
+            });
+
+            await Task.Delay(4);
+
+            Assert.True(task.IsCanceled);
         }
     }
 }

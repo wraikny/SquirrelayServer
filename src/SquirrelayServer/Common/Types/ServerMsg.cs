@@ -8,7 +8,7 @@ namespace SquirrelayServer.Common
     /// <summary>
     /// Message sent by the server
     ///</summary>
-    [Union(0, typeof(ClientId))]
+    [Union(0, typeof(Hello))]
     [Union(1, typeof(ClientsCountResponse))]
     [Union(2, typeof(RoomListResponse))]
     [Union(3, typeof(CreateRoomResponse))]
@@ -22,15 +22,19 @@ namespace SquirrelayServer.Common
     public interface IServerMsg
     {
         [MessagePackObject]
-        public sealed class ClientId : IServerMsg
+        public sealed class Hello : IServerMsg
         {
             [Key(0)]
             public ulong Id { get; private set; }
 
+            [Key(1)]
+            public RoomConfig RoomConfig { get; private set; }
+
             [SerializationConstructor]
-            public ClientId(ulong id)
+            public Hello(ulong id, RoomConfig roomConfig)
             {
                 Id = id;
+                RoomConfig = roomConfig;
             }
         }
 
@@ -106,6 +110,9 @@ namespace SquirrelayServer.Common
             public ResultKind Result { get; private set; }
 
             [Key(1)]
+            public ulong? OwnerId { get; private set; }
+
+            [Key(2)]
             public IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses { get; private set; }
 
             [IgnoreMember]
@@ -113,19 +120,27 @@ namespace SquirrelayServer.Common
 
 
             [SerializationConstructor]
-            public EnterRoomResponse(ResultKind result, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
+            public EnterRoomResponse(ResultKind result, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
             {
                 Result = result;
+                OwnerId = ownerId;
                 Statuses = statuses;
             }
 
-            public static EnterRoomResponse Success(IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
-                => new EnterRoomResponse(ResultKind.Success, statuses);
-            public static readonly EnterRoomResponse RoomNotFound = new EnterRoomResponse(ResultKind.RoomNotFound, null);
-            public static readonly EnterRoomResponse InvalidPassword = new EnterRoomResponse(ResultKind.InvalidPassword, null);
-            public static readonly EnterRoomResponse NumberOfPlayersLimitation = new EnterRoomResponse(ResultKind.NumberOfPlayersLimitation, null);
-            public static readonly EnterRoomResponse AlreadyEntered = new EnterRoomResponse(ResultKind.AlreadyEntered, null);
-            public static readonly EnterRoomResponse InvalidRoomStatus = new EnterRoomResponse(ResultKind.InvalidRoomStatus, null);
+            public EnterRoomResponse(ResultKind result)
+            {
+                Result = result;
+                OwnerId = null;
+                Statuses = null;
+            }
+
+            public static EnterRoomResponse Success(ulong ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
+                => new EnterRoomResponse(ResultKind.Success, ownerId, statuses);
+            public static readonly EnterRoomResponse RoomNotFound = new EnterRoomResponse(ResultKind.RoomNotFound);
+            public static readonly EnterRoomResponse InvalidPassword = new EnterRoomResponse(ResultKind.InvalidPassword);
+            public static readonly EnterRoomResponse NumberOfPlayersLimitation = new EnterRoomResponse(ResultKind.NumberOfPlayersLimitation);
+            public static readonly EnterRoomResponse AlreadyEntered = new EnterRoomResponse(ResultKind.AlreadyEntered);
+            public static readonly EnterRoomResponse InvalidRoomStatus = new EnterRoomResponse(ResultKind.InvalidRoomStatus);
         }
 
         [MessagePackObject]

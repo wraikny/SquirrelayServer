@@ -1,7 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
+
+using MessagePack;
 
 namespace SquirrelayServer.Common
 {
@@ -9,67 +12,119 @@ namespace SquirrelayServer.Common
     /// Configuration for room system
     ///</summary>
     [DataContract]
+    [MessagePackObject]
     public sealed class RoomConfig
     {
         [DataMember(Name = "invisibleEnabled")]
+        [Key(0)]
         public bool InvisibleEnabled { get; set; }
 
         [DataMember(Name = "roomMessageEnabled")]
+        [Key(1)]
         public bool RoomMessageEnabled { get; set; }
 
         [DataMember(Name = "passwordEnabled")]
+        [Key(2)]
         public bool PasswordEnabled { get; set; }
 
-        [DataMember(Name = "enterWhilePlayingAllowed")]
-        public bool EnterWhilePlayingAllowed { get; set; }
+        [DataMember(Name = "enterWhenPlaingAllowed")]
+        [Key(3)]
+        public bool EnterWhenPlaingAllowed { get; set; }
 
-        [DataMember(Name = "disposeSecondAfterCreated")]
-        public float DisposeSecondWhileNoMember { get; set; }
+        [DataMember(Name = "disposeSecondsWhenNoMember")]
+        [Key(4)]
+        public float DisposeSecondsWhenNoMember { get; set; }
 
-        [DataMember(Name = "updatingDisposeStatusIntervalSecond")]
-        public float UpdatingDisposeStatusIntervalSecond { get; set; }
-
+        [DataMember(Name = "updatingDisposeStatusIntervalSeconds")]
+        [Key(5)]
+        public float UpdatingDisposeStatusIntervalSeconds { get; set; }
 
 #pragma warning disable 0649
 
-        [DataMember(Name = "maxNumberOfPlayersRange")]
-        private readonly int[] _maxNumberOfPlayersRange;
+        [DataMember(Name = "numberOfPlayersRange")]
+        [Key(6)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public int[] _numberOfPlayersRange;
 
         [IgnoreDataMember]
-        public (int, int) MaxNumberOfPlayersRange { get; internal set; }
+        [IgnoreMember]
+        public (int, int) NumberOfPlayersRange
+        {
+            get => (_numberOfPlayersRange[0], _numberOfPlayersRange[1]);
+            set
+            {
+                _numberOfPlayersRange[0] = value.Item1;
+                _numberOfPlayersRange[1] = value.Item2;
+            }
+        }
 
         [DataMember(Name = "generatedRoomIdRange")]
-        private readonly int[] _generatedRoomIdRange;
+        [Key(7)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public int[] _generatedRoomIdRange;
 
         [IgnoreDataMember]
-        public (int, int) GeneratedRoomIdRange { get; internal set; }
+        [IgnoreMember]
+        public (int, int) GeneratedRoomIdRange
+        {
+            get => (_generatedRoomIdRange[0], _generatedRoomIdRange[1]);
+            set
+            {
+                _generatedRoomIdRange[0] = value.Item1;
+                _generatedRoomIdRange[1] = value.Item2;
+            }
+        }
 
 #pragma warning restore 0649
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext c)
         {
+            if (_numberOfPlayersRange.Length != 2)
             {
-                if (_maxNumberOfPlayersRange is int[] arr && arr.Length == 2)
-                {
-                    MaxNumberOfPlayersRange = (arr[0], arr[1]);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Length of maxNumberOfPlayersRange is not equal to 2");
-                }
+                throw new InvalidOperationException("Length of maxNumberOfPlayersRange is not equal to 2");
             }
 
+            if (_generatedRoomIdRange.Length != 2)
             {
-                if (_generatedRoomIdRange is int[] arr && arr.Length == 2)
-                {
-                    GeneratedRoomIdRange = (arr[0], arr[1]);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Length of generatedRoomIdRange is not equal to 2");
-                }
+                throw new InvalidOperationException("Length of generatedRoomIdRange is not equal to 2");
             }
+        }
+
+        public RoomConfig()
+        {
+            _numberOfPlayersRange = new int[2];
+            _generatedRoomIdRange = new int[2];
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is RoomConfig)) return false;
+
+            var other = (RoomConfig)obj;
+
+            return (InvisibleEnabled == other.InvisibleEnabled)
+                && (RoomMessageEnabled == other.RoomMessageEnabled)
+                && (PasswordEnabled == other.PasswordEnabled)
+                && (EnterWhenPlaingAllowed == other.EnterWhenPlaingAllowed)
+                && (DisposeSecondsWhenNoMember == other.DisposeSecondsWhenNoMember)
+                && (UpdatingDisposeStatusIntervalSeconds == other.UpdatingDisposeStatusIntervalSeconds)
+                && (NumberOfPlayersRange == other.NumberOfPlayersRange)
+                && (GeneratedRoomIdRange == other.GeneratedRoomIdRange);
+
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(
+                InvisibleEnabled,
+                RoomMessageEnabled,
+                PasswordEnabled,
+                EnterWhenPlaingAllowed,
+                DisposeSecondsWhenNoMember,
+                UpdatingDisposeStatusIntervalSeconds,
+                NumberOfPlayersRange,
+                GeneratedRoomIdRange
+            );
         }
     }
 }

@@ -1,7 +1,6 @@
-﻿using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using System.Reactive.Threading.Tasks;
-
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 using LiteNetLib;
@@ -15,39 +14,75 @@ namespace SquirrelayServer.Common
         where TSend : class
         where TRecv : class
     {
-        private readonly ISubject<TRecv> _recvMsgs;
+        private sealed class Receiver
+        {
+            public Type Type { get; set; }
+
+            public TRecv Msg { get; set; }
+
+            public bool IsCanceled { get; set; } = false;
+        }
+
+        private readonly List<Receiver> _receivers;
 
         private readonly ISender<TSend> _sender;
 
         public ulong? Id { get; set; }
 
-        public MessageHandler(ISubject<TRecv> subject, ISender<TSend> sender)
+        public MessageHandler(ISender<TSend> sender)
         {
-            _recvMsgs = subject;
+            _receivers = new List<Receiver>();
             _sender = sender;
+        }
+
+        public void Cancel()
+        {
+            foreach (var r in _receivers)
+            {
+                r.IsCanceled = true;
+            }
+            _receivers.Clear();
         }
 
         /// <summary>
         /// Returns a task to be completed when a message of the specified type is received.
         /// </summary>
-        public Task<URecv> WaitMsgOfType<URecv>()
-            where URecv : TRecv
+        public async Task<URecv> WaitMsgOfType<URecv>()
+            where URecv : class, TRecv
         {
-            return _recvMsgs.Where(x => x is URecv).Select(x => (URecv)x).ToTask();
+            var receiver = new Receiver { Type = typeof(URecv) };
+            _receivers.Add(receiver);
+
+            while (receiver.Msg is null)
+            {
+                if (receiver.IsCanceled) throw new OperationCanceledException();
+
+                await Task.Yield();
+            }
+            return receiver.Msg as URecv;
         }
 
         /// <summary>
-        /// Add a message that was received
+        /// Add received message
         /// </summary>
         public void Receive(TRecv msg)
         {
-            _recvMsgs.OnNext(msg);
+            _receivers.RemoveAll(r =>
+            {
+                if (r.Type.IsAssignableFrom(msg.GetType()))
+                {
+                    r.Msg = msg;
+                    return true;
+                }
+
+                return false;
+            });
         }
 
         /// <summary>
         /// Send a message
         /// </summary>
-        public void Send(TSend msg, byte channelNumber, DeliveryMethod method)
+        public void Send(TSend msg, byte channelNumber = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered)
         {
             _sender.Send(msg, channelNumber, method);
         }
@@ -57,15 +92,15 @@ namespace SquirrelayServer.Common
             _sender.SendByte(data, channel, method);
         }
 
-        /// <summary>
-        /// Send a message of type USend and return a received response of type URecv
-        /// </summary>
-        public async ValueTask<URecv> SendWithResponseAsync<USend, URecv>(USend msg, byte channelNumber, DeliveryMethod method)
-            where USend : class, TSend, IWithResponse<URecv>
-            where URecv : class, TRecv, IResponse
-        {
-            _sender.Send(msg, channelNumber, method);
-            return await WaitMsgOfType<URecv>();
-        }
+        ///// <summary>
+        ///// Send a message of type USend and return a received response of type URecv
+        ///// </summary>
+        //public Task<URecv> SendWithResponseAsync<USend, URecv>(USend msg, byte channelNumber = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered)
+        //    where USend : class, TSend, IWithResponse<URecv>
+        //    where URecv : class, TRecv, IResponse
+        //{
+        //    _sender.Send(msg, channelNumber, method);
+        //    return WaitMsgOfType<URecv>();
+        //}
     }
 }

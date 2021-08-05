@@ -17,10 +17,10 @@
         "invisibleEnabled": true,
         "roomMessageEnabled": true,
         "passwordEnabled": true,
-        "enterWhilePlayingAllowed": true,
-        "DisposeSecondWhileNoMember": 120.0,
-        "updatingDisposeStatusIntervalSecond": 10.0,
-        "maxNumberOfPlayersRange": [ 2, 6 ],
+        "enterWhenPlaingAllowed": true,
+        "disposeSecondsWhenNoMember": 120.0,
+        "updatingDisposeStatusIntervalSeconds": 10.0,
+        "numberOfPlayersRange": [ 2, 6 ],
         "generatedRoomIdRange": [ 1000, 9999 ]
     },
 

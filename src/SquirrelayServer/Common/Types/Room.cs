@@ -2,6 +2,13 @@
 
 namespace SquirrelayServer.Common
 {
+    public enum RoomStatus
+    {
+        WaitingToPlay,
+        Playing,
+        OwnerExited,
+    }
+
     /// <summary>
     /// Information about the room
     /// </summary>

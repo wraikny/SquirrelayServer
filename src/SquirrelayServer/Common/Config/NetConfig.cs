@@ -83,6 +83,16 @@ namespace SquirrelayServer.Common
             DisconnectedTimeout = _disconnectTimeout ?? 5000;
             UpdateTime = _updateTime ?? 15;
         }
+
+        public NetConfig(int port, string key)
+        {
+            Port = port;
+            ConnectionKey = key;
+            NatPunchEnabled = false;
+            PingInterval = 1000;
+            DisconnectedTimeout = 5000;
+            UpdateTime = 15;
+        }
     }
 }
 

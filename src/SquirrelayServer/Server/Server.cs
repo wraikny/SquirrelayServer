@@ -15,7 +15,7 @@ using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Server
 {
-    public sealed class Server : INetEventListener
+    public sealed class Server
     {
         private readonly Config _config;
         private readonly MessagePackSerializerOptions _options;
@@ -48,7 +48,7 @@ namespace SquirrelayServer.Server
 
             _fps = new FPS(config.NetConfig.UpdateTime);
 
-            _manager = new NetManager(this)
+            _manager = new NetManager(new Listener(this))
             {
                 NatPunchEnabled = config.NetConfig.NatPunchEnabled,
                 UpdateTime = config.NetConfig.UpdateTime,
@@ -75,7 +75,11 @@ namespace SquirrelayServer.Server
 
         public async ValueTask Start()
         {
-            if (IsRunning) return;
+            if (IsRunning)
+            {
+                NetDebug.Logger.WriteNet(NetLogLevel.Info, "Server has already been running.");
+                return;
+            }
 
             if (!_manager.Start(_config.NetConfig.Port))
             {
@@ -94,7 +98,7 @@ namespace SquirrelayServer.Server
             {
                 _manager.PollEvents();
 
-                _roomList.Update(_clientsByClientId);
+                _roomList.Update();
 
                 await _fps.Update();
             }
@@ -113,115 +117,156 @@ namespace SquirrelayServer.Server
             IsRunning = false;
         }
 
-        void INetEventListener.OnConnectionRequest(ConnectionRequest request)
+        private sealed class Listener : INetEventListener
         {
-            if (_manager.ConnectedPeersCount < _config.NetConfig.MaxClientsCount)
+            private readonly Server _server;
+
+            public Listener(Server server)
             {
-                request.AcceptIfKey(_config.NetConfig.ConnectionKey);
+                _server = server;
             }
-            else
+
+            void INetEventListener.OnConnectionRequest(ConnectionRequest request)
             {
-                request.Reject();
+                if (_server._manager.ConnectedPeersCount < _server._config.NetConfig.MaxClientsCount)
+                {
+                    request.AcceptIfKey(_server._config.NetConfig.ConnectionKey);
+                }
+                else
+                {
+                    request.Reject();
+                }
             }
-        }
 
-        void INetEventListener.OnPeerConnected(NetPeer peer)
-        {
-            var id = _clientIdNext;
-            _clientIdNext++;
-
-            var sender = new NetPeerSender<IServerMsg>(peer, _options);
-            var client = new ClientHandler(id, sender);
-            _clients[peer.Id] = client;
-            _clientsByClientId[id] = client;
-
-            client.Send(new IServerMsg.ClientId(id));
-        }
-
-        void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
-        {
-            _clients.Remove(peer.Id, out var client);
-            _clientsByClientId.Remove(client.Id);
-
-            if (client.RoomId is { })
+            void INetEventListener.OnPeerConnected(NetPeer peer)
             {
-                _roomList.ExitRoom(client);
+                var id = _server._clientIdNext;
+                _server._clientIdNext++;
+
+                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Client({id}) connected (Address = {peer.EndPoint.Address}).");
+
+                var sender = new NetPeerSender<IServerMsg>(peer, _server._options);
+                var client = new ClientHandler(id, sender);
+                _server._clients[peer.Id] = client;
+                _server._clientsByClientId[id] = client;
+
+                client.Send(new IServerMsg.Hello(id, _server._config.RoomConfig));
             }
-        }
 
-        void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
-        {
-            var client = _clients[peer.Id];
-            var clientMsg = MessagePackSerializer.Deserialize<IClientMsg>(reader.GetRemainingBytesSegment(), _options);
-            reader.Recycle();
-
-            switch (clientMsg)
+            void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
             {
-                case IClientMsg.SetPlayerStatus m:
-                    {
-                        var res = _roomList.SetPlayerStatus(client, m);
-                        client.Send(res);
-                        break;
-                    }
-                case IClientMsg.GetRoomList _:
-                    {
-                        var res = _roomList.GetRoomListInfo();
-                        client.Send(res);
-                        break;
-                    }
-                case IClientMsg.CreateRoom m:
-                    {
-                        var res = _roomList.CreateRoom(client, m);
-                        client.Send(res);
-                        break;
-                    }
-                case IClientMsg.EnterRoom m:
-                    {
-                        var res = _roomList.EnterRoom(client, m);
-                        client.Send(res);
-                        break;
-                    }
-                case IClientMsg.ExitRoom _:
-                    {
-                        var res = _roomList.ExitRoom(client);
-                        client.Send(res);
-                        break;
-                    }
-                case IClientMsg.OperateRoom m:
-                    {
-                        var res = _roomList.OperateRoom(client, m);
-                        client.Send(res);
-                        break;
-                    }
-                case IClientMsg.SendGameMessage m:
-                    {
-                        var res = _roomList.ReceiveGameMessage(client, m);
-                        client.Send(res);
-                        break;
-                    }
-                //case IResponse _:
-                //    {
-                //        client.Receive(clientMsg);
-                //        break;
-                //    }
-                default:
-                    break;
+                _server._clients.Remove(peer.Id, out var client);
+                _server._clientsByClientId.Remove(client.Id);
+
+                if (client.RoomId is { })
+                {
+                    _server._roomList.ExitRoom(client);
+                }
+                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Client({client.Id}) connected (Address = {peer.EndPoint.Address}) because '{disconnectInfo.Reason}'.");
             }
-        }
 
-        void INetEventListener.OnNetworkError(IPEndPoint endPoint, SocketError socketError)
-        {
-            NetDebug.Logger.WriteNet(NetLogLevel.Error, $"NetworkError at {endPoint} with {Enum.GetName(typeof(SocketError), socketError)}");
-        }
+            void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
+            {
+                var client = _server._clients[peer.Id];
 
-        void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
-        {
+                try
+                {
+                    IClientMsg clientMsg = null;
 
-        }
+                    try
+                    {
+                        clientMsg = MessagePackSerializer.Deserialize<IClientMsg>(reader.GetRemainingBytesSegment(), _server._options);
+                    }
+                    catch
+                    {
+                        NetDebug.Logger.WriteNet(NetLogLevel.Error, $"Failed to deserialize message from client({client.Id}).");
+                        return;
+                    }
+                    finally
+                    {
+                        reader.Recycle();
+                    }
 
-        void INetEventListener.OnNetworkLatencyUpdate(NetPeer peer, int latency)
-        {
-            _clients[peer.Id].Latency = latency;
+                    switch (clientMsg)
+                    {
+                        case IClientMsg.GetClientsCount _:
+                            {
+                                var res = new IServerMsg.ClientsCountResponse(_server._clients.Count);
+                                client.Send(res);
+                                break;
+                            }
+                        case IClientMsg.GetRoomList _:
+                            {
+                                var res = _server._roomList.GetRoomInfoList();
+                                client.Send(res);
+                                break;
+                            }
+                        case IClientMsg.CreateRoom m:
+                            {
+                                var res = _server._roomList.CreateRoom(client, m);
+                                client.Send(res);
+                                break;
+                            }
+                        case IClientMsg.EnterRoom m:
+                            {
+                                var res = _server._roomList.EnterRoom(client, m);
+                                client.Send(res);
+                                break;
+                            }
+                        case IClientMsg.ExitRoom _:
+                            {
+                                var res = _server._roomList.ExitRoom(client);
+                                client.Send(res);
+                                break;
+                            }
+                        case IClientMsg.OperateRoom m:
+                            {
+                                var res = _server._roomList.OperateRoom(client, m);
+                                client.Send(res);
+                                break;
+                            }
+                        case IClientMsg.SetPlayerStatus m:
+                            {
+                                var res = _server._roomList.SetPlayerStatus(client, m);
+                                client.Send(res);
+                                break;
+                            }
+                        case IClientMsg.SendGameMessage m:
+                            {
+                                var res = _server._roomList.ReceiveGameMessage(client, m);
+                                client.Send(res);
+                                break;
+                            }
+                        //case IResponse _:
+                        //    {
+                        //        client.Receive(clientMsg);
+                        //        break;
+                        //    }
+                        default:
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    NetDebug.Logger.WriteNet(NetLogLevel.Error, $"Error occured while handling client's message\n{e.Message}\n{e.StackTrace}");
+                }
+            }
+
+            void INetEventListener.OnNetworkError(IPEndPoint endPoint, SocketError socketError)
+            {
+                NetDebug.Logger.WriteNet(NetLogLevel.Error, $"NetworkError at {endPoint} with {Enum.GetName(typeof(SocketError), socketError)}");
+            }
+
+            void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
+            {
+
+            }
+
+            void INetEventListener.OnNetworkLatencyUpdate(NetPeer peer, int latency)
+            {
+                _server._clients[peer.Id].Latency = latency;
+            }
+
         }
     }
 }

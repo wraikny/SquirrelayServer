@@ -30,11 +30,12 @@ namespace SquirrelayServer.Tests
         }
 
         [Fact]
-        public void ServerMsg_ClientId()
+        public async Task ServerMsg_Hello()
         {
+            var config = await Config.LoadFromFileAsync(@"config/config.json");
             for (ulong i = 0; i < 3; i++)
             {
-                Check<IServerMsg.ClientId, IServerMsg>(new IServerMsg.ClientId(i));
+                Check<IServerMsg.Hello, IServerMsg>(new IServerMsg.Hello(i, config.RoomConfig));
             }
         }
 
@@ -64,7 +65,7 @@ namespace SquirrelayServer.Tests
             Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.InvalidPassword);
             Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation);
             Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.AlreadyEntered);
-            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.Success(null));
+            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.Success(0, null));
         }
 
         [Fact]

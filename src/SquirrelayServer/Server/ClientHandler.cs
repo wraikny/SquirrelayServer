@@ -15,6 +15,10 @@ namespace SquirrelayServer.Server
 
     public interface IClientHandler
     {
+        public ulong Id { get; }
+
+        public int? RoomId { get; set; }
+
         void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered);
 
         void SendByte(byte[] data, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered);
@@ -23,7 +27,7 @@ namespace SquirrelayServer.Server
     /// <summary>
     /// Class that sends and receives messages for each client
     /// </summary>
-    internal sealed class ClientHandler : IPlayer, IClientHandler
+    internal sealed class ClientHandler : IClientHandler
     {
         private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
 
@@ -50,7 +54,7 @@ namespace SquirrelayServer.Server
         public ClientHandler(ulong id, NetPeerSender<IServerMsg> sender)
         {
             //var subject = Subject.Synchronize(new Subject<IClientMsg>());
-            _handler = new MessageHandler<IServerMsg, IClientMsg>(null, sender)
+            _handler = new MessageHandler<IServerMsg, IClientMsg>(sender)
             {
                 Id = id,
             };
