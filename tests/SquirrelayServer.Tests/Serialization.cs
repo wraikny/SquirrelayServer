@@ -39,10 +39,11 @@ namespace SquirrelayServer.Tests
         }
 
         [Fact]
-        public void ServerMsg_SetPlayerStatusResponse()
+        public void ServerMsg_ClientsCountResponse()
         {
-            Check<IServerMsg.SetPlayerStatusResponse, IServerMsg>(IServerMsg.SetPlayerStatusResponse.PlayerOutOfRoom);
-            Check<IServerMsg.SetPlayerStatusResponse, IServerMsg>(IServerMsg.SetPlayerStatusResponse.Success);
+            Check<IServerMsg.ClientsCountResponse, IServerMsg>(new IServerMsg.ClientsCountResponse(0));
+            Check<IServerMsg.ClientsCountResponse, IServerMsg>(new IServerMsg.ClientsCountResponse(1));
+            Check<IServerMsg.ClientsCountResponse, IServerMsg>(new IServerMsg.ClientsCountResponse(2));
         }
 
         [Fact]
@@ -80,6 +81,13 @@ namespace SquirrelayServer.Tests
             Check<IServerMsg.OperateRoomResponse, IServerMsg>(IServerMsg.OperateRoomResponse.PlayerOutOfRoom);
             Check<IServerMsg.OperateRoomResponse, IServerMsg>(IServerMsg.OperateRoomResponse.PlayerIsNotOwner);
             Check<IServerMsg.OperateRoomResponse, IServerMsg>(IServerMsg.OperateRoomResponse.InvalidRoomStatus);
+        }
+
+        [Fact]
+        public void ServerMsg_SetPlayerStatusResponse()
+        {
+            Check<IServerMsg.SetPlayerStatusResponse, IServerMsg>(IServerMsg.SetPlayerStatusResponse.PlayerOutOfRoom);
+            Check<IServerMsg.SetPlayerStatusResponse, IServerMsg>(IServerMsg.SetPlayerStatusResponse.Success);
         }
 
         [Fact]
@@ -140,12 +148,9 @@ namespace SquirrelayServer.Tests
         }
 
         [Fact]
-        public void ClientMsg_SetPlayerStatus()
+        public void ClientMsg_GetClientsCount()
         {
-            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(null));
-            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = null }));
-            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = new byte[0] }));
-            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = new byte[1] }));
+            Check<IClientMsg.GetClientsCount, IClientMsg>(IClientMsg.GetClientsCount.Instance);
         }
 
         [Fact]
@@ -181,6 +186,15 @@ namespace SquirrelayServer.Tests
         {
             Check<IClientMsg.OperateRoom, IClientMsg>(IClientMsg.OperateRoom.StartPlaying);
             Check<IClientMsg.OperateRoom, IClientMsg>(IClientMsg.OperateRoom.FinishPlaying);
+        }
+
+        [Fact]
+        public void ClientMsg_SetPlayerStatus()
+        {
+            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(null));
+            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = null }));
+            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = new byte[0] }));
+            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = new byte[1] }));
         }
 
         [Fact]

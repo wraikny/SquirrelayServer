@@ -9,15 +9,16 @@ namespace SquirrelayServer.Common
     /// Message sent by the server
     ///</summary>
     [Union(0, typeof(ClientId))]
-    [Union(1, typeof(SetPlayerStatusResponse))]
+    [Union(1, typeof(ClientsCountResponse))]
     [Union(2, typeof(RoomListResponse))]
     [Union(3, typeof(CreateRoomResponse))]
     [Union(4, typeof(EnterRoomResponse))]
     [Union(5, typeof(ExitRoomResponse))]
     [Union(6, typeof(OperateRoomResponse))]
-    [Union(7, typeof(SendGameMessageResponse))]
-    [Union(8, typeof(UpdateRoomPlayers))]
-    [Union(9, typeof(DistributeGameMessage))]
+    [Union(7, typeof(SetPlayerStatusResponse))]
+    [Union(8, typeof(SendGameMessageResponse))]
+    [Union(9, typeof(UpdateRoomPlayers))]
+    [Union(10, typeof(DistributeGameMessage))]
     public interface IServerMsg
     {
         [MessagePackObject]
@@ -33,30 +34,17 @@ namespace SquirrelayServer.Common
             }
         }
 
-
         [MessagePackObject]
-        public sealed class SetPlayerStatusResponse : IServerMsg, IResponse
+        public sealed class ClientsCountResponse : IServerMsg, IResponse
         {
-            public enum ResultKind
-            {
-                Success = 0,
-                PlayerOutOfRoom = 1,
-            }
-
             [Key(0)]
-            public ResultKind Result { get; private set; }
-
-            [IgnoreMember]
-            public bool IsSuccess => Result == ResultKind.Success;
+            public int Count { get; private set; }
 
             [SerializationConstructor]
-            public SetPlayerStatusResponse(ResultKind result)
+            public ClientsCountResponse(int count)
             {
-                Result = result;
+                Count = count;
             }
-
-            public static readonly SetPlayerStatusResponse Success = new SetPlayerStatusResponse(ResultKind.Success);
-            public static readonly SetPlayerStatusResponse PlayerOutOfRoom = new SetPlayerStatusResponse(ResultKind.PlayerOutOfRoom);
         }
 
         [MessagePackObject]
@@ -194,6 +182,31 @@ namespace SquirrelayServer.Common
             public static readonly OperateRoomResponse PlayerOutOfRoom = new OperateRoomResponse(ResultKind.PlayerOutOfRoom);
             public static readonly OperateRoomResponse InvalidRoomStatus = new OperateRoomResponse(ResultKind.InvalidRoomStatus);
 
+        }
+
+        [MessagePackObject]
+        public sealed class SetPlayerStatusResponse : IServerMsg, IResponse
+        {
+            public enum ResultKind
+            {
+                Success = 0,
+                PlayerOutOfRoom = 1,
+            }
+
+            [Key(0)]
+            public ResultKind Result { get; private set; }
+
+            [IgnoreMember]
+            public bool IsSuccess => Result == ResultKind.Success;
+
+            [SerializationConstructor]
+            public SetPlayerStatusResponse(ResultKind result)
+            {
+                Result = result;
+            }
+
+            public static readonly SetPlayerStatusResponse Success = new SetPlayerStatusResponse(ResultKind.Success);
+            public static readonly SetPlayerStatusResponse PlayerOutOfRoom = new SetPlayerStatusResponse(ResultKind.PlayerOutOfRoom);
         }
 
         [MessagePackObject]

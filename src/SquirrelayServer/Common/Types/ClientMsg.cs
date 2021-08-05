@@ -5,26 +5,22 @@ namespace SquirrelayServer.Common
     /// <summary>
     /// Message sent by the client
     ///</summary>
-    [Union(0, typeof(SetPlayerStatus))]
+    [Union(0, typeof(GetClientsCount))]
     [Union(1, typeof(GetRoomList))]
     [Union(2, typeof(CreateRoom))]
     [Union(3, typeof(EnterRoom))]
     [Union(4, typeof(ExitRoom))]
     [Union(5, typeof(OperateRoom))]
-    [Union(6, typeof(SendGameMessage))]
+    [Union(6, typeof(SetPlayerStatus))]
+    [Union(7, typeof(SendGameMessage))]
     public interface IClientMsg
     {
         [MessagePackObject]
-        public sealed class SetPlayerStatus : IClientMsg, IWithResponse<IServerMsg.SetPlayerStatusResponse>
+        public sealed class GetClientsCount : IClientMsg, IWithResponse<IServerMsg.ClientsCountResponse>
         {
-            [Key(0)]
-            public RoomPlayerStatus Status { get; private set; }
+            public GetClientsCount() { }
 
-            [SerializationConstructor]
-            public SetPlayerStatus(RoomPlayerStatus status)
-            {
-                Status = status;
-            }
+            public static readonly GetClientsCount Instance = new GetClientsCount();
         }
 
         [MessagePackObject]
@@ -97,6 +93,19 @@ namespace SquirrelayServer.Common
 
             public static readonly OperateRoom StartPlaying = new OperateRoom(RoomOperateKind.StartPlaying);
             public static readonly OperateRoom FinishPlaying = new OperateRoom(RoomOperateKind.FinishPlaying);
+        }
+
+        [MessagePackObject]
+        public sealed class SetPlayerStatus : IClientMsg, IWithResponse<IServerMsg.SetPlayerStatusResponse>
+        {
+            [Key(0)]
+            public RoomPlayerStatus Status { get; private set; }
+
+            [SerializationConstructor]
+            public SetPlayerStatus(RoomPlayerStatus status)
+            {
+                Status = status;
+            }
         }
 
         [MessagePackObject]
