@@ -93,7 +93,7 @@ namespace SquirrelayServer.Client
             _manager.Connect(host, _netConfig.Port, _netConfig.ConnectionKey);
 
             _listener = listener;
-            
+
             while (_messageHandler is null) await Task.Yield();
 
             var hello = await _messageHandler.WaitMsgOfType<IServerMsg.Hello>();
@@ -135,7 +135,7 @@ namespace SquirrelayServer.Client
                     {
                         _listener.OnReceived(m.ClientId, m.ElapsedSecond, message);
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         exceptions ??= new List<Exception>();
                         exceptions.Add(e);
@@ -294,7 +294,7 @@ namespace SquirrelayServer.Client
                     reader.Recycle();
                 }
 
-                switch(msg)
+                switch (msg)
                 {
                     case IServerMsg.BroadcastGameMessages m:
                         {
