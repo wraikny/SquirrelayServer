@@ -124,11 +124,13 @@ namespace SquirrelayServer.Common
             NatPunchEnabled = false;
             PingInterval = 1000;
             DisconnectedTimeout = 5000;
+#if DEBUG
             DebugOnly = new DebugOnlyConfig
             {
                 SimulationPacketLossChance = null,
                 SimulationLatencyRange = (17, 21),
             };
+#endif
         }
     }
 }
