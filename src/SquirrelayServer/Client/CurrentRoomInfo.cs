@@ -33,11 +33,21 @@ namespace SquirrelayServer.Client
                 {
                     try
                     {
-                        Statuses[k] = MessagePackSerializer.Deserialize<T>(v.Data, _options);
+                        if (v is null) continue;
+
+                        if (v.Data is null)
+                        {
+                            Statuses[k] = null;
+                        }
+                        else
+                        {
+                            Statuses[k] = MessagePackSerializer.Deserialize<T>(v.Data, _options);
+                        }
                     }
                     catch
                     {
 
+                        NetDebug.Logger.WriteNet(NetLogLevel.Error, $"Failed to deserialize player status from client({k}).");
                     }
 
                 }
@@ -48,25 +58,25 @@ namespace SquirrelayServer.Client
         {
             OwnerId = msg.Owner;
 
-            foreach (var x in msg.Statuses)
+            foreach (var (k, v) in msg.Statuses)
             {
-                if (x.Value is null)
+                if (v is null)
                 {
-                    Statuses.Remove(x.Key);
+                    Statuses.Remove(k);
                 }
-                else if (x.Value is null)
+                else if (v.Data is null)
                 {
-                    Statuses[x.Key] = null;
+                    Statuses[k] = null;
                 }
                 else
                 {
                     try
                     {
-                        Statuses[x.Key] = MessagePackSerializer.Deserialize<T>(x.Value.Data, _options);
+                        Statuses[k] = MessagePackSerializer.Deserialize<T>(v.Data, _options);
                     }
                     catch
                     {
-                        NetDebug.Logger.WriteNet(NetLogLevel.Error, $"Failed to deserialize player status from client({x.Key}).");
+                        NetDebug.Logger.WriteNet(NetLogLevel.Error, $"Failed to deserialize player status from client({k}).");
                     }
                 }
             }
