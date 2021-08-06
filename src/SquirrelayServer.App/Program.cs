@@ -34,7 +34,7 @@ namespace SquirrelayServer.App
             var configPath = args.Length == 0 ? @"config/config.json" : args[0];
             var config = await Config.LoadFromFileAsync(configPath);
 
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, "Config is loaded from '{0}'.", configPath);
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Config is loaded from '{0}'.", configPath);
 
             // Start server
             var server = new Server.Server(config, Options.DefaultOptions);

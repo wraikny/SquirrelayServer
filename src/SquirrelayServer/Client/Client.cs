@@ -12,22 +12,23 @@ using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Client
 {
-    
-
-    public sealed class Client<TStatus, TMsg>
-        where TStatus : class
+    public sealed class Client<TPlayerStatus, TRoomMessage, TMsg>
+        where TPlayerStatus : class
+        where TRoomMessage : class
     {
         private readonly NetConfig _netConfig;
         private readonly MessagePackSerializerOptions _serverSerializerOptions;
         private readonly MessagePackSerializerOptions _clientsSerializerOptions;
         private readonly NetManager _manager;
 
+        private readonly Queue<Action> _context;
+
         private readonly List<RelayedGameMessage> _gameMessages;
 
         private MessageHandler<IClientMsg, IServerMsg> _messageHandler;
-        private IGameMessageListener<TMsg> _listener;
+        private IClientListener<TPlayerStatus, TRoomMessage, TMsg> _listener;
 
-        public CurrentRoomInfo<TStatus> CurrentRoom { get; private set; }
+        public CurrentRoomInfo<TPlayerStatus, TRoomMessage> CurrentRoom { get; private set; }
 
         public ulong? Id { get; private set; }
 
@@ -51,6 +52,8 @@ namespace SquirrelayServer.Client
 
             Id = null;
             IsStarted = false;
+
+            _context = new Queue<Action>();
 
             _manager = new NetManager(new Listener(this))
             {
@@ -77,11 +80,11 @@ namespace SquirrelayServer.Client
 #endif
         }
 
-        public async Task Start(string host, IGameMessageListener<TMsg> listener)
+        public async Task Start(string host, IClientListener<TPlayerStatus, TRoomMessage, TMsg> listener)
         {
             if (IsStarted)
             {
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, "Client has already been started.");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client has already been started.");
                 return;
             }
 
@@ -105,17 +108,11 @@ namespace SquirrelayServer.Client
             IsConnected = true;
         }
 
-        public Task Start(string host, Action<ulong, float, TMsg> onReceived)
-        {
-            var listener = new EventBasedGameMessageListener<TMsg>();
-            listener.OnReceived += onReceived;
-
-            return Start(host, listener);
-        }
-
         public void Stop()
         {
             _manager.Stop(true);
+
+            _context.Clear();
 
             _listener = null;
             _messageHandler.Cancel();
@@ -137,6 +134,19 @@ namespace SquirrelayServer.Client
 
             List<Exception> exceptions = null;
 
+            while(_context.TryDequeue(out var action))
+            {
+                try
+                {
+                    action?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    exceptions ??= new List<Exception>();
+                    exceptions.Add(e);
+                }
+            }
+
             foreach (var m in _gameMessages)
             {
                 try
@@ -145,7 +155,7 @@ namespace SquirrelayServer.Client
 
                     try
                     {
-                        _listener.OnReceived(m.ClientId, m.ElapsedSecond, message);
+                        _listener.OnGameMessageReceived(m.ClientId, m.ElapsedSecond, message);
                     }
                     catch (Exception e)
                     {
@@ -155,7 +165,7 @@ namespace SquirrelayServer.Client
                 }
                 catch
                 {
-                    NetDebug.Logger.WriteNet(NetLogLevel.Error, $"Failed to deserialize gameMessage from client({m.ClientId}).");
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize gameMessage from client({m.ClientId}).");
                 }
             }
 
@@ -185,36 +195,40 @@ namespace SquirrelayServer.Client
             return res.Info;
         }
 
-        public async Task<IServerMsg.CreateRoomResponse> CreateRoomAsync(bool isVisible = true, string password = null, int? maxNumberOfPlayers = null, string message = null)
+        public async Task<IServerMsg.CreateRoomResponse> CreateRoomAsync(bool isVisible = true, string password = null, int? maxNumberOfPlayers = null, TPlayerStatus playerStatus = null, TRoomMessage roomMessage = null)
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
             isVisible = RoomConfig.InvisibleEnabled ? isVisible : true;
             password = RoomConfig.PasswordEnabled ? password : null;
             var maxNum = maxNumberOfPlayers ?? RoomConfig.NumberOfPlayersRange.Item2;
-            message = RoomConfig.RoomMessageEnabled ? message : null;
+            var playerStatusData = playerStatus is null ? null : MessagePackSerializer.Serialize(playerStatus, _clientsSerializerOptions);
+            var roomStatusData = RoomConfig.RoomMessageEnabled ? MessagePackSerializer.Serialize(roomMessage, _clientsSerializerOptions) : null;
 
-            _messageHandler.Send(new IClientMsg.CreateRoom(isVisible, password, maxNum, message));
+
+            _messageHandler.Send(new IClientMsg.CreateRoom(isVisible, password, maxNum, playerStatusData, roomStatusData));
             var res = await _messageHandler.WaitMsgOfType<IServerMsg.CreateRoomResponse>();
 
             if (res.IsSuccess)
             {
-                CurrentRoom = new CurrentRoomInfo<TStatus>(_clientsSerializerOptions, res.Id, Id, null);
+                CurrentRoom = CreateCurrentRoomInfo(res.Id, Id, null, null);
             }
 
             return res;
         }
 
-        public async Task<IServerMsg.EnterRoomResponse> EnterRoomAsync(int roomId, string password = null)
+        public async Task<IServerMsg.EnterRoomResponse> EnterRoomAsync(int roomId, string password = null, TPlayerStatus playerStatus = null)
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
-            _messageHandler.Send(new IClientMsg.EnterRoom(roomId, RoomConfig.PasswordEnabled ? password : null));
+            var playerStatusData = playerStatus is null ? null : MessagePackSerializer.Serialize(playerStatus, _clientsSerializerOptions);
+
+            _messageHandler.Send(new IClientMsg.EnterRoom(roomId, RoomConfig.PasswordEnabled ? password : null, playerStatusData));
             var res = await _messageHandler.WaitMsgOfType<IServerMsg.EnterRoomResponse>();
 
             if (res.IsSuccess)
             {
-                CurrentRoom = new CurrentRoomInfo<TStatus>(_clientsSerializerOptions, roomId, res.OwnerId, res.Statuses);
+                CurrentRoom = CreateCurrentRoomInfo(roomId, res.OwnerId, res.Statuses, res.RoomStatus);
             }
 
             return res;
@@ -244,13 +258,22 @@ namespace SquirrelayServer.Client
             return _messageHandler.WaitMsgOfType<IServerMsg.OperateRoomResponse>();
         }
 
-        public Task<IServerMsg.SetPlayerStatusResponse> SetPlayerStatusAsync(TStatus status)
+        public Task<IServerMsg.SetPlayerStatusResponse> SetPlayerStatusAsync(TPlayerStatus status)
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
-            var data = MessagePackSerializer.Serialize(status, _serverSerializerOptions);
+            var data = MessagePackSerializer.Serialize(status, _clientsSerializerOptions);
             _messageHandler.Send(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = data }));
             return _messageHandler.WaitMsgOfType<IServerMsg.SetPlayerStatusResponse>();
+        }
+
+        public Task<IServerMsg.SetRoomMessageResponse> SetRoomMessageAsync(TRoomMessage roomMessage)
+        {
+            if (!IsConnected) throw new ClientNotConnectedException();
+
+            var data = MessagePackSerializer.Serialize(roomMessage, _clientsSerializerOptions);
+            _messageHandler.Send(new IClientMsg.SetRoomMessage(data));
+            return _messageHandler.WaitMsgOfType<IServerMsg.SetRoomMessageResponse>();
         }
 
         public Task<IServerMsg.SendGameMessageResponse> SendGameMessage(TMsg message)
@@ -262,12 +285,93 @@ namespace SquirrelayServer.Client
             return _messageHandler.WaitMsgOfType<IServerMsg.SendGameMessageResponse>();
         }
 
+        private CurrentRoomInfo<TPlayerStatus, TRoomMessage> CreateCurrentRoomInfo(int id, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomMessage)
+        {
+            var currentRoomInfo = new CurrentRoomInfo<TPlayerStatus, TRoomMessage>(id, ownerId);
+
+            if (statuses is { })
+            {
+                foreach (var (k, v) in statuses)
+                {
+                    if (v is null) continue;
+
+                    if (v.Data is null)
+                    {
+                        currentRoomInfo.PlayerStatusesImpl[k] = null;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            currentRoomInfo.PlayerStatusesImpl[k] = MessagePackSerializer.Deserialize<TPlayerStatus>(v.Data, _clientsSerializerOptions);
+                        }
+                        catch
+                        {
+                            currentRoomInfo.PlayerStatusesImpl[k] = null;
+                            NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize player status from client({k}).");
+                        }
+                    }
+
+                }
+            }
+
+            currentRoomInfo.SetRoomMessage(_clientsSerializerOptions, roomMessage);
+
+            return currentRoomInfo;
+        }
+
+        private void UpdateCurrentRoomInfo(CurrentRoomInfo<TPlayerStatus, TRoomMessage> currentRoomInfo, IServerMsg.UpdateRoomPlayersAndMessage msg)
+        {
+            if (currentRoomInfo.OwnerId != msg.Owner)
+            {
+                currentRoomInfo.OwnerId = msg.Owner;
+                _context.Enqueue(() => { _listener.OnOwnerChanged(msg.Owner); });
+            }
+
+            foreach (var (k, v) in msg.Statuses)
+            {
+                if (v is null)
+                {
+                    currentRoomInfo.PlayerStatusesImpl.Remove(k);
+                    _context.Enqueue(() => { _listener.OnPlayerExited(k); });
+                }
+                else
+                {
+                    TPlayerStatus status = null;
+
+                    if (v.Data != null)
+                    {
+                        try
+                        {
+                            status = MessagePackSerializer.Deserialize<TPlayerStatus>(v.Data, _clientsSerializerOptions);
+                        }
+                        catch
+                        {
+                            NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize player status from client({k}).");
+                        }
+                    }
+
+                    if (currentRoomInfo.PlayerStatusesImpl.ContainsKey(k))
+                    {
+                        _context.Enqueue(() => { _listener.OnPlayerEntered(k, status); });
+                    }
+                    else
+                    {
+                        _context.Enqueue(() => { _listener.OnPlayerStatusUpdated(k, status); });
+                    }
+
+                    currentRoomInfo.PlayerStatusesImpl[k] = status;
+                }
+            }
+
+            currentRoomInfo.SetRoomMessage(_clientsSerializerOptions, msg.RoomStatus);
+        }
 
         private sealed class Listener : INetEventListener
         {
-            private readonly Client<TStatus, TMsg> _client;
+            private readonly Client<TPlayerStatus, TRoomMessage, TMsg> _client;
 
-            public Listener(Client<TStatus, TMsg> client)
+            public Listener(Client<TPlayerStatus, TRoomMessage, TMsg> client)
             {
                 _client = client;
             }
@@ -282,7 +386,7 @@ namespace SquirrelayServer.Client
                 var sender = new NetPeerSender<IClientMsg>(peer, _client._serverSerializerOptions);
                 _client._messageHandler = new MessageHandler<IClientMsg, IServerMsg>(sender);
 
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Connected to server.");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Connected to server.");
             }
 
             void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
@@ -290,7 +394,7 @@ namespace SquirrelayServer.Client
                 _client.IsConnected = false;
                 _client.Stop();
 
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Disconnected from server.");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Disconnected from server.");
             }
 
             void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
@@ -302,7 +406,7 @@ namespace SquirrelayServer.Client
                 }
                 catch
                 {
-                    NetDebug.Logger.WriteNet(NetLogLevel.Error, "Failed to deserialize message from server.");
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Error, "Failed to deserialize message from server.");
                     return;
                 }
                 finally
@@ -320,6 +424,24 @@ namespace SquirrelayServer.Client
                     case IServerMsg.NotifyRoomOperation m:
                         {
                             _client.CurrentRoom?.OnNotifiedRoomOperation(m.Operate);
+                            switch (m.Operate)
+                            {
+                                case RoomOperateKind.StartPlaying:
+                                    _client._context.Enqueue(() => _client._listener.OnGameStarted());
+                                    break;
+                                case RoomOperateKind.FinishPlaying:
+                                    _client._context.Enqueue(() => _client._listener.OnGameFinished());
+                                    break;
+                                default: break;
+                            }
+                            break;
+                        }
+                    case IServerMsg.UpdateRoomPlayersAndMessage m:
+                        {
+                            if (_client.CurrentRoom is { } r)
+                            {
+                                _client.UpdateCurrentRoomInfo(r, m);
+                            }
                             break;
                         }
                     default:
@@ -332,7 +454,7 @@ namespace SquirrelayServer.Client
 
             void INetEventListener.OnNetworkError(IPEndPoint endPoint, SocketError socketError)
             {
-                NetDebug.Logger.WriteNet(NetLogLevel.Error, $"NetworkError at {endPoint} with {Enum.GetName(typeof(SocketError), socketError)}.");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"NetworkError at {endPoint} with {Enum.GetName(typeof(SocketError), socketError)}.");
             }
 
             void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)

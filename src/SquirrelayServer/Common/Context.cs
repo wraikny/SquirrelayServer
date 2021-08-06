@@ -37,5 +37,10 @@ namespace SquirrelayServer.Common
                 e.Invoke();
             }
         }
+
+        public void Clear()
+        {
+            _entries.Clear();
+        }
     }
 }

@@ -10,84 +10,59 @@ using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Client
 {
-    public sealed class CurrentRoomInfo<T>
-        where T : class
+    internal interface CurrentRoomInfoListener<TPlayerStatus, TRoomMessage>
+        where TPlayerStatus : class
+        where TRoomMessage : class
+    {
+
+    }
+
+    public sealed class CurrentRoomInfo<TPlayerStatus, TRoomMessage>
+        where TPlayerStatus : class
+        where TRoomMessage : class
     {
         private readonly MessagePackSerializerOptions _options;
 
-        public int Id { get; private set; }
+        public int Id { get; internal set; }
 
-        public ulong? OwnerId { get; private set; }
+        public ulong? OwnerId { get; internal set; }
 
-        public Dictionary<ulong, T> Statuses { get; private set; }
+        internal Dictionary<ulong, TPlayerStatus> PlayerStatusesImpl { get; set; }
 
-        public bool IsPlaying { get; private set; }
+        public IReadOnlyDictionary<ulong, TPlayerStatus> PlayerStatuses => PlayerStatusesImpl;
 
-        public CurrentRoomInfo(MessagePackSerializerOptions options, int id, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
+        public TRoomMessage RoomMessage { get; internal set; }
+
+        public bool IsPlaying { get; internal set; }
+
+        internal CurrentRoomInfo(int id, ulong? ownerId)
         {
-            _options = options;
             Id = id;
             OwnerId = ownerId;
-            Statuses = new Dictionary<ulong, T>();
-
-            if (statuses is { })
-            {
-                foreach (var (k, v) in statuses)
-                {
-                    try
-                    {
-                        if (v is null) continue;
-
-                        if (v.Data is null)
-                        {
-                            Statuses[k] = null;
-                        }
-                        else
-                        {
-                            Statuses[k] = MessagePackSerializer.Deserialize<T>(v.Data, _options);
-                        }
-                    }
-                    catch
-                    {
-
-                        NetDebug.Logger.WriteNet(NetLogLevel.Error, $"Failed to deserialize player status from client({k}).");
-                    }
-
-                }
-            }
+            PlayerStatusesImpl = new Dictionary<ulong, TPlayerStatus>();
         }
-
-        public void OnUpdatedRoomPlayers(IServerMsg.UpdateRoomPlayers msg)
-        {
-            OwnerId = msg.Owner;
-
-            foreach (var (k, v) in msg.Statuses)
-            {
-                if (v is null)
-                {
-                    Statuses.Remove(k);
-                }
-                else if (v.Data is null)
-                {
-                    Statuses[k] = null;
-                }
-                else
-                {
-                    try
-                    {
-                        Statuses[k] = MessagePackSerializer.Deserialize<T>(v.Data, _options);
-                    }
-                    catch
-                    {
-                        NetDebug.Logger.WriteNet(NetLogLevel.Error, $"Failed to deserialize player status from client({k}).");
-                    }
-                }
-            }
-        }
-
         public void OnNotifiedRoomOperation(RoomOperateKind kind)
         {
             IsPlaying = kind == RoomOperateKind.StartPlaying;
+        }
+
+        internal void SetRoomMessage(MessagePackSerializerOptions options, byte[] roomMessage)
+        {
+            if (roomMessage is null)
+            {
+                RoomMessage = null;
+            }
+            else
+            {
+                try
+                {
+                    RoomMessage = MessagePackSerializer.Deserialize<TRoomMessage>(roomMessage, options);
+                }
+                catch
+                {
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize room status.");
+                }
+            }
         }
     }
 }

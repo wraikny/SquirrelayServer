@@ -77,7 +77,7 @@ namespace SquirrelayServer.Server
         {
             if (IsRunning)
             {
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, "Server has already been running.");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Server has already been running.");
                 return;
             }
 
@@ -86,7 +86,7 @@ namespace SquirrelayServer.Server
                 throw new Exception("Failed to start the Server.");
             }
 
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, "Server started at port {0}.", _config.NetConfig.Port);
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Server started at port {0}.", _config.NetConfig.Port);
 
             IsRunning = true;
 
@@ -143,7 +143,7 @@ namespace SquirrelayServer.Server
                 var id = _server._clientIdNext;
                 _server._clientIdNext++;
 
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Client({id}) connected (Address = {peer.EndPoint.Address}).");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Client({id}) connected (Address = {peer.EndPoint.Address}).");
 
                 var sender = new NetPeerSender<IServerMsg>(peer, _server._options);
                 var client = new ClientHandler(id, sender);
@@ -162,7 +162,7 @@ namespace SquirrelayServer.Server
                 {
                     _server._roomList.ExitRoom(client);
                 }
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Client({client.Id}) disconnected (Address = {peer.EndPoint.Address}) because '{disconnectInfo.Reason}'.");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Client({client.Id}) disconnected (Address = {peer.EndPoint.Address}) because '{disconnectInfo.Reason}'.");
             }
 
             void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
@@ -179,7 +179,7 @@ namespace SquirrelayServer.Server
                     }
                     catch
                     {
-                        NetDebug.Logger.WriteNet(NetLogLevel.Error, $"Failed to deserialize message from client({client.Id}).");
+                        NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize message from client({client.Id}).");
                         return;
                     }
                     finally
@@ -231,6 +231,12 @@ namespace SquirrelayServer.Server
                                 client.Send(res);
                                 break;
                             }
+                        case IClientMsg.SetRoomMessage m:
+                            {
+                                var res = _server._roomList.SetRoomStatus(client, m);
+                                client.Send(res);
+                                break;
+                            }
                         case IClientMsg.SendGameMessage m:
                             {
                                 var res = _server._roomList.ReceiveGameMessage(client, m);
@@ -248,13 +254,13 @@ namespace SquirrelayServer.Server
                 }
                 catch (Exception e)
                 {
-                    NetDebug.Logger.WriteNet(NetLogLevel.Error, $"Error occured while handling client's message\n{e.Message}\n{e.StackTrace}");
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Error occured while handling client's message\n{e.Message}\n{e.StackTrace}");
                 }
             }
 
             void INetEventListener.OnNetworkError(IPEndPoint endPoint, SocketError socketError)
             {
-                NetDebug.Logger.WriteNet(NetLogLevel.Error, $"NetworkError at {endPoint} with {Enum.GetName(typeof(SocketError), socketError)}.");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"NetworkError at {endPoint} with {Enum.GetName(typeof(SocketError), socketError)}.");
             }
 
             void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)

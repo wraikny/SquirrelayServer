@@ -65,7 +65,7 @@ namespace SquirrelayServer.Tests
             Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.InvalidPassword);
             Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation);
             Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.AlreadyEntered);
-            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.Success(0, null));
+            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.Success(0, null, new byte[1]));
         }
 
         [Fact]
@@ -105,7 +105,8 @@ namespace SquirrelayServer.Tests
             {
                 ulong? owner = null;
                 var statuses = new Dictionary<ulong, RoomPlayerStatus>();
-                Check<IServerMsg.UpdateRoomPlayers, IServerMsg>(new IServerMsg.UpdateRoomPlayers(owner, statuses));
+                var roomStatus = new byte[1];
+                Check<IServerMsg.UpdateRoomPlayersAndMessage, IServerMsg>(new IServerMsg.UpdateRoomPlayersAndMessage(owner, statuses, roomStatus));
             }
 
             {
@@ -127,7 +128,8 @@ namespace SquirrelayServer.Tests
                         }
                     }
                 };
-                Check<IServerMsg.UpdateRoomPlayers, IServerMsg>(new IServerMsg.UpdateRoomPlayers(owner, statuses));
+                var roomStatuses = new byte[1];
+                Check<IServerMsg.UpdateRoomPlayersAndMessage, IServerMsg>(new IServerMsg.UpdateRoomPlayersAndMessage(owner, statuses, roomStatuses));
             }
         }
 
@@ -163,17 +165,17 @@ namespace SquirrelayServer.Tests
         [Fact]
         public void ClientMsg_CreateRoom()
         {
-            Check<IClientMsg.CreateRoom, IClientMsg>(new IClientMsg.CreateRoom(false, null, 0, null));
-            Check<IClientMsg.CreateRoom, IClientMsg>(new IClientMsg.CreateRoom(false, "", -1, ""));
-            Check<IClientMsg.CreateRoom, IClientMsg>(new IClientMsg.CreateRoom(true, "password", 2, "mesage"));
+            Check<IClientMsg.CreateRoom, IClientMsg>(new IClientMsg.CreateRoom(false, null, 0, null, null));
+            Check<IClientMsg.CreateRoom, IClientMsg>(new IClientMsg.CreateRoom(false, "", -1, new byte[1], new byte[2]));
+            Check<IClientMsg.CreateRoom, IClientMsg>(new IClientMsg.CreateRoom(true, "password", 2, new byte[1], new byte[3]));
         }
 
         [Fact]
         public void ClientMsg_EnterRoom()
         {
-            Check<IClientMsg.EnterRoom, IClientMsg>(new IClientMsg.EnterRoom(0, null));
-            Check<IClientMsg.EnterRoom, IClientMsg>(new IClientMsg.EnterRoom(1, ""));
-            Check<IClientMsg.EnterRoom, IClientMsg>(new IClientMsg.EnterRoom(-1, "password"));
+            Check<IClientMsg.EnterRoom, IClientMsg>(new IClientMsg.EnterRoom(0, null, null));
+            Check<IClientMsg.EnterRoom, IClientMsg>(new IClientMsg.EnterRoom(1, "", new byte[1]));
+            Check<IClientMsg.EnterRoom, IClientMsg>(new IClientMsg.EnterRoom(-1, "password", new byte[2]));
         }
 
         [Fact]

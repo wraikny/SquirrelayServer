@@ -32,11 +32,11 @@ namespace ClientExample
             var configPath = @"config/config.json";
             var config = await Config.LoadFromFileAsync(configPath);
 
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Config is loaded from '{configPath}'.");
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Config is loaded from '{configPath}'.");
 
             var options = Options.DefaultOptions;
 
-            var client = new Client<Status, GameMessage>(config.NetConfig, options, options);
+            var client = new Client<PlayerStatus, RoomStatus, GameMessage>(config.NetConfig, options, options);
 
             _ = Task.Run(async () => {
                 while (true)
@@ -50,29 +50,33 @@ namespace ClientExample
 
             var msg = new GameMessage { Message = "Hello, world!" };
 
-            await client.Start("localhost", (clientId, elapsedSeconds, message) => {
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Message received: '{message.Message}'");
+            var listener = new EventBasedClientLIstener<PlayerStatus, RoomStatus, GameMessage>();
+
+            listener.OnGameMessageReceived += (clientId, elapsedSeconds, message) => {
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Message received: '{message.Message}'");
 
                 messageReceivedCount++;
                 Assert.True(message.Message == msg.Message);
-            });
+            };
 
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, "Client started");
+            await client.Start("localhost", listener);
+
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client started");
 
             var clientsCount = await client.GetClientsCountAsync();
             Assert.True(clientsCount == 1);
 
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Clients count:{clientsCount}");
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Clients count:{clientsCount}");
 
             {
                 var roomList = await client.GetRoomListAsync();
                 Assert.True(roomList.Count == 0);
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"RoomList.Count:{roomList.Count}");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"RoomList.Count:{roomList.Count}");
             }
 
             var createRoomRes = await client.CreateRoomAsync();
             Assert.True(createRoomRes.IsSuccess);
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Success to create room:{createRoomRes.Id}");
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Success to create room:{createRoomRes.Id}");
 
             Assert.True(client.CurrentRoom is { });
             Assert.True(client.IsOwner);
@@ -80,7 +84,7 @@ namespace ClientExample
             {
                 var roomList = await client.GetRoomListAsync();
                 Assert.True(roomList.Count == 1);
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"RoomList.Count:{roomList.Count}");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"RoomList.Count:{roomList.Count}");
             }
 
             var gameStartRes = await client.StartPlayingAsync();
@@ -88,7 +92,7 @@ namespace ClientExample
             var sendRes = await client.SendGameMessage(msg);
 
             Assert.True(sendRes.IsSuccess);
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Send game message.");
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Send game message.");
 
             await Task.Delay(2000);
 

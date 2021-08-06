@@ -9,7 +9,13 @@ using MessagePack;
 namespace ClientExample
 {
     [MessagePackObject]
-    public sealed class Status
+    public sealed class PlayerStatus
+    {
+
+    }
+
+    [MessagePackObject]
+    public sealed class RoomStatus
     {
 
     }

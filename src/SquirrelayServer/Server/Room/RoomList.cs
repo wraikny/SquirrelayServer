@@ -87,7 +87,7 @@ namespace SquirrelayServer.Server
                 _rooms.Remove(id);
                 _roomInfoList.Remove(id);
 
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({id}): disposed.");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({id}): disposed.");
             }
         }
 
@@ -125,7 +125,7 @@ namespace SquirrelayServer.Server
                 IsVisible = _roomConfig.InvisibleEnabled ? msg.IsVisible : true,
                 MaxNumberOfPlayers = Utils.Clamp(msg.MaxNumberOfPlayers, maxRange.Item1, maxRange.Item2),
                 NumberOfPlayers = 0,
-                Message = _roomConfig.RoomMessageEnabled ? msg.Message : null,
+                Status = _roomConfig.RoomMessageEnabled ? msg.RoomStatus : null,
             };
 
             var password = _roomConfig.PasswordEnabled ? msg.Password : null;
@@ -135,11 +135,11 @@ namespace SquirrelayServer.Server
             _rooms[roomId] = room;
             _roomInfoList[roomId] = roomInfo;
 
-            room.EnterRoomWithoutCheck(client);
+            room.EnterRoomWithoutCheck(client, msg.PlayerStatus);
 
             client.RoomId = roomId;
 
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({roomId}): created");
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({roomId}): created");
 
             return IServerMsg.CreateRoomResponse.Success(roomId);
         }
@@ -149,7 +149,7 @@ namespace SquirrelayServer.Server
             if (client.RoomId is { }) return IServerMsg.EnterRoomResponse.AlreadyEntered;
             if (!_rooms.TryGetValue(msg.RoomId, out var room)) return IServerMsg.EnterRoomResponse.RoomNotFound;
 
-            var res = room.EnterRoom(client, msg.Password);
+            var res = room.EnterRoom(client, msg.Password, msg.Status);
 
             if (res.IsSuccess)
             {
@@ -209,6 +209,18 @@ namespace SquirrelayServer.Server
             var room = _rooms[client.RoomId.Value];
 
             return room.SetPlayerStatus(client, msg.Status);
+        }
+
+        public IServerMsg.SetRoomMessageResponse SetRoomStatus(IClientHandler client, IClientMsg.SetRoomMessage msg)
+        {
+            if (client.RoomId is null)
+            {
+                return IServerMsg.SetRoomMessageResponse.PlayerOutOfRoom;
+            }
+
+            var room = _rooms[client.RoomId.Value];
+
+            return room.SetRoomStatus(client, msg.RoomMessage);
         }
     }
 }

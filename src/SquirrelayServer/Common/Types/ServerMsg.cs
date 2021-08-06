@@ -16,10 +16,11 @@ namespace SquirrelayServer.Common
     [Union(5, typeof(ExitRoomResponse))]
     [Union(6, typeof(OperateRoomResponse))]
     [Union(7, typeof(SetPlayerStatusResponse))]
-    [Union(8, typeof(SendGameMessageResponse))]
-    [Union(9, typeof(UpdateRoomPlayers))]
-    [Union(10, typeof(BroadcastGameMessages))]
-    [Union(11, typeof(NotifyRoomOperation))]
+    [Union(8, typeof(SetRoomMessageResponse))]
+    [Union(9, typeof(SendGameMessageResponse))]
+    [Union(10, typeof(UpdateRoomPlayersAndMessage))]
+    [Union(11, typeof(BroadcastGameMessages))]
+    [Union(12, typeof(NotifyRoomOperation))]
     public interface IServerMsg
     {
         [MessagePackObject]
@@ -90,8 +91,8 @@ namespace SquirrelayServer.Common
                 Id = id;
             }
 
-            public static CreateRoomResponse Success(int id) => new CreateRoomResponse(ResultKind.Success, id);
-            public static readonly CreateRoomResponse AlreadyEntered = new CreateRoomResponse(ResultKind.AlreadyEntered, 0);
+            internal static CreateRoomResponse Success(int id) => new CreateRoomResponse(ResultKind.Success, id);
+            internal static readonly CreateRoomResponse AlreadyEntered = new CreateRoomResponse(ResultKind.AlreadyEntered, 0);
         }
 
         [MessagePackObject]
@@ -116,16 +117,20 @@ namespace SquirrelayServer.Common
             [Key(2)]
             public IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses { get; private set; }
 
+            [Key(3)]
+            public byte[] RoomStatus { get; private set; }
+
             [IgnoreMember]
             public bool IsSuccess => Result == ResultKind.Success;
 
 
             [SerializationConstructor]
-            public EnterRoomResponse(ResultKind result, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
+            public EnterRoomResponse(ResultKind result, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomStatus)
             {
                 Result = result;
                 OwnerId = ownerId;
                 Statuses = statuses;
+                RoomStatus = roomStatus;
             }
 
             public EnterRoomResponse(ResultKind result)
@@ -133,15 +138,16 @@ namespace SquirrelayServer.Common
                 Result = result;
                 OwnerId = null;
                 Statuses = null;
+                RoomStatus = null;
             }
 
-            public static EnterRoomResponse Success(ulong ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
-                => new EnterRoomResponse(ResultKind.Success, ownerId, statuses);
-            public static readonly EnterRoomResponse RoomNotFound = new EnterRoomResponse(ResultKind.RoomNotFound);
-            public static readonly EnterRoomResponse InvalidPassword = new EnterRoomResponse(ResultKind.InvalidPassword);
-            public static readonly EnterRoomResponse NumberOfPlayersLimitation = new EnterRoomResponse(ResultKind.NumberOfPlayersLimitation);
-            public static readonly EnterRoomResponse AlreadyEntered = new EnterRoomResponse(ResultKind.AlreadyEntered);
-            public static readonly EnterRoomResponse InvalidRoomStatus = new EnterRoomResponse(ResultKind.InvalidRoomStatus);
+            internal static EnterRoomResponse Success(ulong ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomStatus)
+                => new EnterRoomResponse(ResultKind.Success, ownerId, statuses, roomStatus);
+            internal static readonly EnterRoomResponse RoomNotFound = new EnterRoomResponse(ResultKind.RoomNotFound);
+            internal static readonly EnterRoomResponse InvalidPassword = new EnterRoomResponse(ResultKind.InvalidPassword);
+            internal static readonly EnterRoomResponse NumberOfPlayersLimitation = new EnterRoomResponse(ResultKind.NumberOfPlayersLimitation);
+            internal static readonly EnterRoomResponse AlreadyEntered = new EnterRoomResponse(ResultKind.AlreadyEntered);
+            internal static readonly EnterRoomResponse InvalidRoomStatus = new EnterRoomResponse(ResultKind.InvalidRoomStatus);
         }
 
         [MessagePackObject]
@@ -166,8 +172,8 @@ namespace SquirrelayServer.Common
                 Result = result;
             }
 
-            public static readonly ExitRoomResponse Success = new ExitRoomResponse(ResultKind.Success);
-            public static readonly ExitRoomResponse PlayerOutOfRoom = new ExitRoomResponse(ResultKind.PlayerOutOfRoom);
+            internal static readonly ExitRoomResponse Success = new ExitRoomResponse(ResultKind.Success);
+            internal static readonly ExitRoomResponse PlayerOutOfRoom = new ExitRoomResponse(ResultKind.PlayerOutOfRoom);
         }
 
         [MessagePackObject]
@@ -193,10 +199,10 @@ namespace SquirrelayServer.Common
                 Result = result;
             }
 
-            public static readonly OperateRoomResponse Success = new OperateRoomResponse(ResultKind.Success);
-            public static readonly OperateRoomResponse PlayerIsNotOwner = new OperateRoomResponse(ResultKind.PlayerIsNotOwner);
-            public static readonly OperateRoomResponse PlayerOutOfRoom = new OperateRoomResponse(ResultKind.PlayerOutOfRoom);
-            public static readonly OperateRoomResponse InvalidRoomStatus = new OperateRoomResponse(ResultKind.InvalidRoomStatus);
+            internal static readonly OperateRoomResponse Success = new OperateRoomResponse(ResultKind.Success);
+            internal static readonly OperateRoomResponse PlayerIsNotOwner = new OperateRoomResponse(ResultKind.PlayerIsNotOwner);
+            internal static readonly OperateRoomResponse PlayerOutOfRoom = new OperateRoomResponse(ResultKind.PlayerOutOfRoom);
+            internal static readonly OperateRoomResponse InvalidRoomStatus = new OperateRoomResponse(ResultKind.InvalidRoomStatus);
 
         }
 
@@ -221,8 +227,35 @@ namespace SquirrelayServer.Common
                 Result = result;
             }
 
-            public static readonly SetPlayerStatusResponse Success = new SetPlayerStatusResponse(ResultKind.Success);
-            public static readonly SetPlayerStatusResponse PlayerOutOfRoom = new SetPlayerStatusResponse(ResultKind.PlayerOutOfRoom);
+            internal static readonly SetPlayerStatusResponse Success = new SetPlayerStatusResponse(ResultKind.Success);
+            internal static readonly SetPlayerStatusResponse PlayerOutOfRoom = new SetPlayerStatusResponse(ResultKind.PlayerOutOfRoom);
+        }
+
+        [MessagePackObject]
+        public sealed class SetRoomMessageResponse : IServerMsg, IResponse
+        {
+            public enum ResultKind
+            {
+                Success = 0,
+                PlayerOutOfRoom = 1,
+                PlayerIsNotOwner = 2,
+            }
+
+            [Key(0)]
+            public ResultKind Result { get; private set; }
+
+            [IgnoreMember]
+            public bool IsSuccess => Result == ResultKind.Success;
+
+            [SerializationConstructor]
+            public SetRoomMessageResponse(ResultKind result)
+            {
+                Result = result;
+            }
+
+            internal static readonly SetRoomMessageResponse Success = new SetRoomMessageResponse(ResultKind.Success);
+            internal static readonly SetRoomMessageResponse PlayerOutOfRoom = new SetRoomMessageResponse(ResultKind.PlayerOutOfRoom);
+            internal static readonly SetRoomMessageResponse PlayerIsNotOwner = new SetRoomMessageResponse(ResultKind.PlayerIsNotOwner);
         }
 
         [MessagePackObject]
@@ -247,13 +280,13 @@ namespace SquirrelayServer.Common
                 Result = result;
             }
 
-            public static readonly SendGameMessageResponse Success = new SendGameMessageResponse(ResultKind.Success);
-            public static readonly SendGameMessageResponse PlayerOutOfRoom = new SendGameMessageResponse(ResultKind.PlayerOutOfRoom);
-            public static readonly SendGameMessageResponse InvalidRoomStatus = new SendGameMessageResponse(ResultKind.InvalidRoomStatus);
+            internal static readonly SendGameMessageResponse Success = new SendGameMessageResponse(ResultKind.Success);
+            internal static readonly SendGameMessageResponse PlayerOutOfRoom = new SendGameMessageResponse(ResultKind.PlayerOutOfRoom);
+            internal static readonly SendGameMessageResponse InvalidRoomStatus = new SendGameMessageResponse(ResultKind.InvalidRoomStatus);
         }
 
         [MessagePackObject]
-        public sealed class UpdateRoomPlayers : IServerMsg
+        public sealed class UpdateRoomPlayersAndMessage : IServerMsg
         {
             [Key(0)]
             public ulong? Owner { get; private set; }
@@ -261,11 +294,15 @@ namespace SquirrelayServer.Common
             [Key(1)]
             public IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses { get; private set; }
 
+            [Key(2)]
+            public byte[] RoomStatus { get; private set; }
+
             [SerializationConstructor]
-            public UpdateRoomPlayers(ulong? owner, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
+            public UpdateRoomPlayersAndMessage(ulong? owner, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomStatus)
             {
                 Owner = owner;
                 Statuses = statuses;
+                RoomStatus = roomStatus;
             }
         }
 

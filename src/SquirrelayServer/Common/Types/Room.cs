@@ -25,7 +25,7 @@ namespace SquirrelayServer.Common
         public int NumberOfPlayers { get; set; }
 
         [Key(3)]
-        public string Message { get; set; }
+        public byte[] Status { get; set; }
 
         [Key(4)]
         public bool IsPlaying { get; set; }

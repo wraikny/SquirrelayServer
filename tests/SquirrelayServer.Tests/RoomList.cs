@@ -41,7 +41,7 @@ namespace SquirrelayServer.Tests
 
             var playerMock0 = CreateClientHandlerMock(0);
 
-            var createRoom = new IClientMsg.CreateRoom(true, null, 6, "");
+            var createRoom = new IClientMsg.CreateRoom(true, null, 6, new byte[1], new byte[2]);
 
             var roomCreatedRes = roomList.CreateRoom(playerMock0.Object, createRoom);
             Assert.True(roomCreatedRes.IsSuccess);
@@ -68,7 +68,7 @@ namespace SquirrelayServer.Tests
 
             var clientMock0 = CreateClientHandlerMock(1);
 
-            var enterRoom = new IClientMsg.EnterRoom(roomId, null);
+            var enterRoom = new IClientMsg.EnterRoom(roomId, null, null);
 
             roomList.EnterRoom(clientMock0.Object, enterRoom);
             Assert.Equal(clientMock0.Object.RoomId, roomId);
@@ -137,29 +137,34 @@ namespace SquirrelayServer.Tests
             var msg1 = new IClientMsg.SendGameMessage(new byte[] { 8, 7, 6, 5, 4 });
             roomList.ReceiveGameMessage(clientMock0.Object, msg1);
 
-            var handlerCheckPassed = false;
+            var handlerCheckPassedCount = 0;
+
+            void Send(IServerMsg message, byte channelNumber, LiteNetLib.DeliveryMethod deliveryMethod)
+            {
+                if (message is IServerMsg.BroadcastGameMessages msg)
+                {
+                    Assert.Equal(msg.Messages[0].ClientId, clientMock0.Object.Id);
+                    Assert.True(Enumerable.SequenceEqual(msg.Messages[0].Data, msg0.Data));
+                    Assert.True(Enumerable.SequenceEqual(msg.Messages[1].Data, msg1.Data));
+                    handlerCheckPassedCount++;
+                }
+                else
+                {
+
+                }
+            }
 
             clientMock0.Setup(s => s.Send(It.IsAny<IServerMsg>(), It.IsAny<byte>(), It.IsAny<LiteNetLib.DeliveryMethod>()))
                 .Callback((IServerMsg message, byte channelNumber, LiteNetLib.DeliveryMethod deliveryMethod) =>
                 {
-                    if (message is IServerMsg.BroadcastGameMessages msg)
-                    {
-                        Assert.Equal(msg.Messages[0].ClientId, clientMock0.Object.Id);
-                        Assert.True(Enumerable.SequenceEqual(msg.Messages[0].Data, msg0.Data));
-                        Assert.True(Enumerable.SequenceEqual(msg.Messages[1].Data, msg1.Data));
-                        handlerCheckPassed = true;
-                    }
-                    else
-                    {
-                        Assert.True(false);
-                    }
+                    Send(message, channelNumber, deliveryMethod);
                 });
 
             clientMock0.Setup(s => s.SendByte(It.IsAny<byte[]>(), It.IsAny<byte>(), It.IsAny<LiteNetLib.DeliveryMethod>()))
                 .Callback((byte[] data, byte channelNumber, LiteNetLib.DeliveryMethod deliveryMethod) =>
                 {
                     var msg = MessagePackSerializer.Deserialize<IServerMsg>(data, options);
-                    clientMock0.Object.Send(msg, channelNumber, deliveryMethod);
+                    Send(msg, channelNumber, deliveryMethod);
                 });
 
             var handlers = new Dictionary<ulong, Server.IClientHandler>
@@ -169,7 +174,7 @@ namespace SquirrelayServer.Tests
 
             roomList.Update();
 
-            Assert.True(handlerCheckPassed);
+            Assert.Equal(1, handlerCheckPassedCount);
         }
     }
 }

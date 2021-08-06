@@ -29,6 +29,7 @@ namespace SquirrelayServer.Server
 
         private readonly List<RelayedGameMessage> _temporalGameMessagesBuffer;
 
+        private bool _updatedRoomStatus;
 
         internal IReadOnlyDictionary<ulong, RoomPlayerStatus> PlayerStatuses => _playersStatuses;
 
@@ -89,8 +90,8 @@ namespace SquirrelayServer.Server
         public void Update()
         {
 
-            // When playerstatuses is updated
-            if (_updatedPlayersStatuses.Count > 0)
+            // When playerstatuses is updated or roomstatus is updated
+            if (_updatedPlayersStatuses.Count > 0 || _updatedRoomStatus)
             {
                 foreach (var x in _updatedPlayersStatuses)
                 {
@@ -103,9 +104,13 @@ namespace SquirrelayServer.Server
                         _playersStatuses[x.Key] = x.Value;
                     }
                 }
-                var msg = new IServerMsg.UpdateRoomPlayers(_owner, _updatedPlayersStatuses);
+
+                var msg = new IServerMsg.UpdateRoomPlayersAndMessage(_owner, _updatedPlayersStatuses, Info.Status);
                 Broadcast(msg);
+
+                // clear
                 _updatedPlayersStatuses.Clear();
+                _updatedRoomStatus = false;
             }
 
             // When playing the game
@@ -117,7 +122,7 @@ namespace SquirrelayServer.Server
             }
         }
 
-        public void EnterRoomWithoutCheck(IClientHandler client)
+        public void EnterRoomWithoutCheck(IClientHandler client, byte[] status)
         {
             _clients.Add(client);
             Info.NumberOfPlayers++;
@@ -132,9 +137,11 @@ namespace SquirrelayServer.Server
             {
                 _disposeStopwatch.Reset();
             }
+
+            UpdatePlayerStatus(client.Id, new RoomPlayerStatus { Data = status });
         }
 
-        public IServerMsg.EnterRoomResponse EnterRoom(IClientHandler client, string password)
+        public IServerMsg.EnterRoomResponse EnterRoom(IClientHandler client, string password, byte[] status)
         {
             if (Password is string p && p != password) return IServerMsg.EnterRoomResponse.InvalidPassword;
             if (Info.MaxNumberOfPlayers == _clients.Count) return IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation;
@@ -146,13 +153,11 @@ namespace SquirrelayServer.Server
 
             if (_clients.Contains(client)) return IServerMsg.EnterRoomResponse.AlreadyEntered;
 
-            EnterRoomWithoutCheck(client);
+            EnterRoomWithoutCheck(client, status);
 
-            UpdatePlayerStatus(client.Id, new RoomPlayerStatus { Data = null });
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): client({client.Id}) entered.");
 
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): client({client.Id}) entered.");
-
-            return IServerMsg.EnterRoomResponse.Success(_owner.Value, _playersStatuses);
+            return IServerMsg.EnterRoomResponse.Success(_owner.Value, _playersStatuses, Info.Status);
         }
 
         public IServerMsg.ExitRoomResponse ExitRoom(IClientHandler client)
@@ -162,7 +167,7 @@ namespace SquirrelayServer.Server
                 throw new InvalidOperationException($"Client '{client.Id}' doesn't exists in room '{Id}'");
             }
 
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): client({client.Id}) exited.");
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): client({client.Id}) exited.");
 
             if (_owner == client.Id)
             {
@@ -170,7 +175,7 @@ namespace SquirrelayServer.Server
                 {
                     _owner = _clients.First().Id;
 
-                    NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): set new owner({_owner}).");
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): set new owner({_owner}).");
                 }
                 else
                 {
@@ -178,7 +183,7 @@ namespace SquirrelayServer.Server
                     _owner = null;
                     _disposeStopwatch.Start();
 
-                    NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): owner exit.");
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): owner exit.");
 
                     if (RoomStatus == RoomStatus.Playing)
                     {
@@ -204,7 +209,7 @@ namespace SquirrelayServer.Server
 
             Broadcast(new IServerMsg.NotifyRoomOperation(RoomOperateKind.StartPlaying));
 
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): start playing.");
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): start playing.");
         }
 
         private void FinishPlaying()
@@ -217,7 +222,7 @@ namespace SquirrelayServer.Server
 
             _temporalGameMessagesBuffer.Clear();
 
-            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): finish playing.");
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): finish playing.");
         }
 
         public IServerMsg.OperateRoomResponse OperateRoom(IClientHandler client, RoomOperateKind kind)
@@ -263,6 +268,16 @@ namespace SquirrelayServer.Server
             UpdatePlayerStatus(client.Id, status);
 
             return IServerMsg.SetPlayerStatusResponse.Success;
+        }
+
+        public IServerMsg.SetRoomMessageResponse SetRoomStatus(IClientHandler client, byte[] roomStatus)
+        {
+            if (client.Id != _owner) return IServerMsg.SetRoomMessageResponse.PlayerIsNotOwner;
+
+            Info.Status = roomStatus;
+            _updatedRoomStatus = true;
+
+            return IServerMsg.SetRoomMessageResponse.Success;
         }
 
         public IServerMsg.SendGameMessageResponse ReceiveGameMessage(IClientHandler client, byte[] data)

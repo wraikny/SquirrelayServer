@@ -12,7 +12,8 @@ namespace SquirrelayServer.Common
     [Union(4, typeof(ExitRoom))]
     [Union(5, typeof(OperateRoom))]
     [Union(6, typeof(SetPlayerStatus))]
-    [Union(7, typeof(SendGameMessage))]
+    [Union(7, typeof(SetRoomMessage))]
+    [Union(8, typeof(SendGameMessage))]
     public interface IClientMsg
     {
         [MessagePackObject]
@@ -42,17 +43,22 @@ namespace SquirrelayServer.Common
 
             [Key(2)]
             public int MaxNumberOfPlayers { get; private set; }
-
+            
             [Key(3)]
-            public string Message { get; private set; }
+            public byte[] PlayerStatus { get; private set; }
+
+            [Key(4)]
+            public byte[] RoomStatus { get; private set; }
+
 
             [SerializationConstructor]
-            public CreateRoom(bool isVisible, string password, int maxNumberOfPlayers, string message)
+            public CreateRoom(bool isVisible, string password, int maxNumberOfPlayers, byte[] playerStatus, byte[] roomStatus)
             {
                 IsVisible = isVisible;
                 Password = password;
                 MaxNumberOfPlayers = maxNumberOfPlayers;
-                Message = message;
+                PlayerStatus = playerStatus;
+                RoomStatus = roomStatus;
             }
         }
 
@@ -65,11 +71,15 @@ namespace SquirrelayServer.Common
             [Key(1)]
             public string Password { get; private set; }
 
+            [Key(2)]
+            public byte[] Status { get; private set; }
+
             [SerializationConstructor]
-            public EnterRoom(int roomId, string password)
+            public EnterRoom(int roomId, string password, byte[] status)
             {
                 RoomId = roomId;
                 Password = password;
+                Status = status;
             }
         }
 
@@ -105,6 +115,19 @@ namespace SquirrelayServer.Common
             public SetPlayerStatus(RoomPlayerStatus status)
             {
                 Status = status;
+            }
+        }
+
+        [MessagePackObject]
+        public sealed class SetRoomMessage : IClientMsg, IWithResponse<IServerMsg.SetRoomMessageResponse>
+        {
+            [Key(0)]
+            public byte[] RoomMessage { get; private set; }
+
+            [SerializationConstructor]
+            public SetRoomMessage(byte[] roomMessage)
+            {
+                RoomMessage = roomMessage;
             }
         }
 
