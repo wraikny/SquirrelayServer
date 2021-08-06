@@ -15,15 +15,18 @@ namespace SquirrelayServer.Client
     {
         private readonly MessagePackSerializerOptions _options;
 
+        public int Id { get; private set; }
+
         public ulong? OwnerId { get; private set; }
 
         public Dictionary<ulong, T> Statuses { get; private set; }
 
         public bool IsPlaying { get; private set; }
 
-        public CurrentRoomInfo(MessagePackSerializerOptions options, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
+        public CurrentRoomInfo(MessagePackSerializerOptions options, int id, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
         {
             _options = options;
+            Id = id;
             OwnerId = ownerId;
             Statuses = new Dictionary<ulong, T>();
 

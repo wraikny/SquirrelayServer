@@ -12,10 +12,7 @@ using SquirrelayServer.Common;
 
 namespace SquirrelayServer.Client
 {
-    public interface IGameMessageListener<T>
-    {
-        void OnReceived(ulong clientId, float elapsedSeconds, T message);
-    }
+    
 
     public sealed class Client<TStatus, TMsg>
         where TStatus : class
@@ -41,6 +38,8 @@ namespace SquirrelayServer.Client
         private bool IsStarted { get; set; }
 
         public bool IsConnected { get; private set; }
+
+        public bool IsOwner => CurrentRoom?.OwnerId == Id;
 
         public Client(NetConfig netConfig, MessagePackSerializerOptions serverSerializerOptions, MessagePackSerializerOptions clientsSerializerOptions)
         {
@@ -78,7 +77,7 @@ namespace SquirrelayServer.Client
 #endif
         }
 
-        public async ValueTask Start(string host, IGameMessageListener<TMsg> listener)
+        public async Task Start(string host, IGameMessageListener<TMsg> listener)
         {
             if (IsStarted)
             {
@@ -94,13 +93,24 @@ namespace SquirrelayServer.Client
 
             _listener = listener;
 
-            while (_messageHandler is null) await Task.Yield();
+            while (_messageHandler is null)
+            {
+                await Task.Delay(_netConfig.UpdateTime);
+            }
 
             var hello = await _messageHandler.WaitMsgOfType<IServerMsg.Hello>();
             Id = hello.Id;
             RoomConfig = hello.RoomConfig;
 
             IsConnected = true;
+        }
+
+        public Task Start(string host, Action<ulong, float, TMsg> onReceived)
+        {
+            var listener = new EventBasedGameMessageListener<TMsg>();
+            listener.OnReceived += onReceived;
+
+            return Start(host, listener);
         }
 
         public void Stop()
@@ -121,6 +131,8 @@ namespace SquirrelayServer.Client
 
         public void Update()
         {
+            _manager?.PollEvents();
+
             if (!IsStarted || !IsConnected) return;
 
             List<Exception> exceptions = null;
@@ -147,13 +159,15 @@ namespace SquirrelayServer.Client
                 }
             }
 
+            _gameMessages.Clear();
+
             if (exceptions is { })
             {
                 throw new AggregateException(exceptions);
             }
         }
 
-        public async Task<int> GetClientCountAsync()
+        public async Task<int> GetClientsCountAsync()
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
@@ -185,7 +199,7 @@ namespace SquirrelayServer.Client
 
             if (res.IsSuccess)
             {
-                CurrentRoom = new CurrentRoomInfo<TStatus>(_clientsSerializerOptions, Id, null);
+                CurrentRoom = new CurrentRoomInfo<TStatus>(_clientsSerializerOptions, res.Id, Id, null);
             }
 
             return res;
@@ -200,7 +214,7 @@ namespace SquirrelayServer.Client
 
             if (res.IsSuccess)
             {
-                CurrentRoom = new CurrentRoomInfo<TStatus>(_clientsSerializerOptions, null, res.Statuses);
+                CurrentRoom = new CurrentRoomInfo<TStatus>(_clientsSerializerOptions, roomId, res.OwnerId, res.Statuses);
             }
 
             return res;
@@ -275,6 +289,8 @@ namespace SquirrelayServer.Client
             {
                 _client.IsConnected = false;
                 _client.Stop();
+
+                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Disconnected from server.");
             }
 
             void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)

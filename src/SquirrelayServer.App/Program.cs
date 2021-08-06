@@ -37,11 +37,7 @@ namespace SquirrelayServer.App
             NetDebug.Logger.WriteNet(NetLogLevel.Info, "Config is loaded from '{0}'.", configPath);
 
             // Start server
-            var options = MessagePackSerializerOptions.Standard
-                .WithSecurity(MessagePackSecurity.UntrustedData)
-                .WithCompression(MessagePackCompression.Lz4BlockArray);
-
-            var server = new Server.Server(config, options);
+            var server = new Server.Server(config, Options.DefaultOptions);
             await server.Start();
         }
     }

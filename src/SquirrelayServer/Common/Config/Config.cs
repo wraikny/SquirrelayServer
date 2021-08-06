@@ -13,8 +13,8 @@ namespace SquirrelayServer.Common
         [DataMember(Name = "roomConfig")]
         public RoomConfig RoomConfig { get; private set; }
 
-        [DataMember(Name = "gameConfig")]
-        public GameConfig GameConfig { get; private set; }
+        //[DataMember(Name = "gameConfig")]
+        //public GameConfig GameConfig { get; private set; }
 
         public static Config LoadFromJson(string json)
         {
@@ -41,6 +41,17 @@ namespace SquirrelayServer.Common
         private void OnDeserialized(StreamingContext c)
         {
 
+        }
+
+        public Config()
+        {
+
+        }
+
+        public Config(NetConfig netConfig, RoomConfig roomConfig)
+        {
+            NetConfig = netConfig;
+            RoomConfig = roomConfig;
         }
     }
 }

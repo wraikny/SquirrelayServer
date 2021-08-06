@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
 
 namespace SquirrelayServer.Common
 {
@@ -8,16 +9,14 @@ namespace SquirrelayServer.Common
     [DataContract]
     public sealed class NetConfig
     {
-        public const string DefaultPath = @"config/netconfig.json";
-
         [DataMember(Name = "connectionKey")]
-        public string ConnectionKey { get; private set; }
+        public string ConnectionKey { get; set; }
 
         [DataMember(Name = "port")]
-        public int Port { get; private set; }
+        public int Port { get; set; }
 
         [DataMember(Name = "mexClientsCount")]
-        public int MaxClientsCount { get; private set; }
+        public int MaxClientsCount { get; set; }
 
 #pragma warning disable 0649
 
@@ -25,50 +24,82 @@ namespace SquirrelayServer.Common
         private readonly int? _updateTime;
 
         [IgnoreDataMember]
-        public int UpdateTime { get; private set; }
+        public int UpdateTime { get; set; }
 
         /* NatPunchEnabled */
         [DataMember(Name = "natPunchEnabled")]
         private readonly bool? _natPunchEnabled;
         [IgnoreDataMember]
-        public bool NatPunchEnabled { get; private set; }
+        public bool NatPunchEnabled { get; set; }
 
         /* PingInterval */
         [DataMember(Name = "pingInterval")]
         private readonly int? _pingInterval;
         [IgnoreDataMember]
-        public int PingInterval { get; private set; }
+        public int PingInterval { get; set; }
 
         /* DisconnectedTimeout */
         [DataMember(Name = "disconnectTimeout")]
         private readonly int? _disconnectTimeout;
         [IgnoreDataMember]
-        public int DisconnectedTimeout { get; private set; }
+        public int DisconnectedTimeout { get; set; }
 
 #if DEBUG
         [DataMember(Name = "debugOnly")]
-        public DebugOnlyConfig DebugOnly { get; private set; }
+        public DebugOnlyConfig DebugOnly { get; set; }
 
         [DataContract]
         public sealed class DebugOnlyConfig
         {
             [DataMember(Name = "simulationPacketLossChance")]
-            public int? SimulationPacketLossChance { get; private set; }
+            public int? SimulationPacketLossChance { get; set; }
 
             [DataMember(Name = "simulateLatencyRange")]
-            private readonly int[] _simulationLatencyRange;
+            private int[] _simulationLatencyRange;
 
             [IgnoreDataMember]
-            public (int, int)? SimulationLatencyRange { get; private set; }
+            public (int, int)? SimulationLatencyRange
+            {
+                get
+                {
+                    if (_simulationLatencyRange is null)
+                    {
+                        return null;
+                    }
+
+                    return (_simulationLatencyRange[0], _simulationLatencyRange[1]);
+                }
+                set
+                {
+                    if (value is (int a, int b))
+                    {
+                        if (_simulationLatencyRange is null)
+                        {
+                            _simulationLatencyRange = new int[2] { a, b };
+                        }
+                        else
+                        {
+                            _simulationLatencyRange[0] = a;
+                            _simulationLatencyRange[1] = b;
+                        }
+                    }
+                    else
+                    {
+                        _simulationLatencyRange = null;
+                    }
+                }
+            }
 
             [OnDeserialized]
             private void OnDeserialized(StreamingContext c)
             {
-                if (_simulationLatencyRange != null && _simulationLatencyRange.Length == 2)
+                if (_simulationLatencyRange != null && _simulationLatencyRange.Length != 2)
                 {
-                    SimulationLatencyRange = (_simulationLatencyRange[0], _simulationLatencyRange[1]);
+                    throw new InvalidOperationException("Length of simulationLatencyRange is not equal to 2");
                 }
             }
+
+            public DebugOnlyConfig() { }
         }
 #endif
 
@@ -86,12 +117,18 @@ namespace SquirrelayServer.Common
 
         public NetConfig(int port, string key)
         {
-            Port = port;
             ConnectionKey = key;
+            Port = port;
+            MaxClientsCount = 32;
+            UpdateTime = 15;
             NatPunchEnabled = false;
             PingInterval = 1000;
             DisconnectedTimeout = 5000;
-            UpdateTime = 15;
+            DebugOnly = new DebugOnlyConfig
+            {
+                SimulationPacketLossChance = null,
+                SimulationLatencyRange = (17, 21),
+            };
         }
     }
 }

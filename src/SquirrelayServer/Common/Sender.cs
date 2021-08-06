@@ -27,7 +27,7 @@ namespace SquirrelayServer.Common
 
         void ISender<T>.Send(T message, byte channelNumber, DeliveryMethod deliveryMethod)
         {
-            var data = MessagePackSerializer.Serialize<T>(message, _options);
+            var data = MessagePackSerializer.Serialize(message, _options);
             _peer.Send(data, channelNumber, deliveryMethod);
         }
 

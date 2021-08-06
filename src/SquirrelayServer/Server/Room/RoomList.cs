@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using LiteNetLib;
+
 using MessagePack;
 
 using SquirrelayServer.Common;
@@ -84,6 +86,8 @@ namespace SquirrelayServer.Server
             {
                 _rooms.Remove(id);
                 _roomInfoList.Remove(id);
+
+                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({id}): disposed.");
             }
         }
 
@@ -126,7 +130,7 @@ namespace SquirrelayServer.Server
 
             var password = _roomConfig.PasswordEnabled ? msg.Password : null;
 
-            var room = new Room(_serializerOptions, roomId, roomInfo, password);
+            var room = new Room(_serializerOptions, _roomConfig, roomId, roomInfo, password);
 
             _rooms[roomId] = room;
             _roomInfoList[roomId] = roomInfo;
@@ -134,6 +138,8 @@ namespace SquirrelayServer.Server
             room.EnterRoomWithoutCheck(client);
 
             client.RoomId = roomId;
+
+            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({roomId}): created");
 
             return IServerMsg.CreateRoomResponse.Success(roomId);
         }

@@ -162,7 +162,7 @@ namespace SquirrelayServer.Server
                 {
                     _server._roomList.ExitRoom(client);
                 }
-                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Client({client.Id}) connected (Address = {peer.EndPoint.Address}) because '{disconnectInfo.Reason}'.");
+                NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Client({client.Id}) disconnected (Address = {peer.EndPoint.Address}) because '{disconnectInfo.Reason}'.");
             }
 
             void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)

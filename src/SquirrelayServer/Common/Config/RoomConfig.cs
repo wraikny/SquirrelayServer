@@ -80,12 +80,12 @@ namespace SquirrelayServer.Common
         [OnDeserialized]
         private void OnDeserialized(StreamingContext c)
         {
-            if (_numberOfPlayersRange.Length != 2)
+            if (_numberOfPlayersRange?.Length != 2)
             {
                 throw new InvalidOperationException("Length of maxNumberOfPlayersRange is not equal to 2");
             }
 
-            if (_generatedRoomIdRange.Length != 2)
+            if (_generatedRoomIdRange?.Length != 2)
             {
                 throw new InvalidOperationException("Length of generatedRoomIdRange is not equal to 2");
             }

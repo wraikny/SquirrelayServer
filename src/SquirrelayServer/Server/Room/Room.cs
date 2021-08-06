@@ -15,6 +15,7 @@ namespace SquirrelayServer.Server
     internal class Room
     {
         private readonly MessagePackSerializerOptions _serializerOptions;
+        private readonly RoomConfig _roomConfig;
         private ulong? _owner;
         private readonly List<IClientHandler> _clients;
         private readonly Dictionary<ulong, RoomPlayerStatus> _playersStatuses;
@@ -39,9 +40,10 @@ namespace SquirrelayServer.Server
 
         public RoomStatus RoomStatus { get; private set; }
 
-        public Room(MessagePackSerializerOptions serializerOptions, int id, RoomInfo info, string password)
+        public Room(MessagePackSerializerOptions serializerOptions, RoomConfig roomConfig, int id, RoomInfo info, string password)
         {
             _serializerOptions = serializerOptions;
+            _roomConfig = roomConfig;
 
             _clients = new List<IClientHandler>();
 
@@ -136,12 +138,19 @@ namespace SquirrelayServer.Server
         {
             if (Password is string p && p != password) return IServerMsg.EnterRoomResponse.InvalidPassword;
             if (Info.MaxNumberOfPlayers == _clients.Count) return IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation;
-            if (RoomStatus == RoomStatus.Playing) return IServerMsg.EnterRoomResponse.InvalidRoomStatus;
+
+            if (!_roomConfig.EnterWhenPlaingAllowed && RoomStatus == RoomStatus.Playing)
+            {
+                return IServerMsg.EnterRoomResponse.InvalidRoomStatus;
+            }
+
             if (_clients.Contains(client)) return IServerMsg.EnterRoomResponse.AlreadyEntered;
 
             EnterRoomWithoutCheck(client);
 
             UpdatePlayerStatus(client.Id, new RoomPlayerStatus { Data = null });
+
+            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): client({client.Id}) entered.");
 
             return IServerMsg.EnterRoomResponse.Success(_owner.Value, _playersStatuses);
         }
@@ -153,18 +162,30 @@ namespace SquirrelayServer.Server
                 throw new InvalidOperationException($"Client '{client.Id}' doesn't exists in room '{Id}'");
             }
 
+            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): client({client.Id}) exited.");
+
             if (_owner == client.Id)
             {
-                if (_clients.Count != 0)
+                if (_clients.Count > 0)
                 {
                     _owner = _clients.First().Id;
+
+                    NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): set new owner({_owner}).");
                 }
-                else if (_clients.Count == 0)
+                else
                 {
-                    RoomStatus = RoomStatus.OwnerExited;
                     Info.IsPlaying = false;
                     _owner = null;
                     _disposeStopwatch.Start();
+
+                    NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): owner exit.");
+
+                    if (RoomStatus == RoomStatus.Playing)
+                    {
+                        FinishPlaying();
+                    }
+
+                    RoomStatus = RoomStatus.OwnerExited;
                 }
             }
 
@@ -173,6 +194,30 @@ namespace SquirrelayServer.Server
             UpdatePlayerStatus(client.Id, null);
 
             return IServerMsg.ExitRoomResponse.Success;
+        }
+
+        private void StartPlaying()
+        {
+            RoomStatus = RoomStatus.Playing;
+            Info.IsPlaying = true;
+            _gameStopWatch.Start();
+
+            Broadcast(new IServerMsg.NotifyRoomOperation(RoomOperateKind.StartPlaying));
+
+            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): start playing.");
+        }
+
+        private void FinishPlaying()
+        {
+            _gameStopWatch.Reset();
+            RoomStatus = RoomStatus.WaitingToPlay;
+            Info.IsPlaying = false;
+
+            Broadcast(new IServerMsg.NotifyRoomOperation(RoomOperateKind.FinishPlaying));
+
+            _temporalGameMessagesBuffer.Clear();
+
+            NetDebug.Logger.WriteNet(NetLogLevel.Info, $"Room({Id}): finish playing.");
         }
 
         public IServerMsg.OperateRoomResponse OperateRoom(IClientHandler client, RoomOperateKind kind)
@@ -191,11 +236,7 @@ namespace SquirrelayServer.Server
                             return IServerMsg.OperateRoomResponse.InvalidRoomStatus;
                         }
 
-                        RoomStatus = RoomStatus.Playing;
-                        Info.IsPlaying = true;
-                        _gameStopWatch.Start();
-
-                        Broadcast(new IServerMsg.NotifyRoomOperation(kind));
+                        StartPlaying();
 
                         break;
                     }
@@ -206,11 +247,7 @@ namespace SquirrelayServer.Server
                             return IServerMsg.OperateRoomResponse.InvalidRoomStatus;
                         }
 
-                        _gameStopWatch.Reset();
-                        RoomStatus = RoomStatus.WaitingToPlay;
-                        Info.IsPlaying = false;
-
-                        Broadcast(new IServerMsg.NotifyRoomOperation(kind));
+                        FinishPlaying();
 
                         break;
                     }
