@@ -18,7 +18,8 @@ namespace SquirrelayServer.Common
     [Union(7, typeof(SetPlayerStatusResponse))]
     [Union(8, typeof(SendGameMessageResponse))]
     [Union(9, typeof(UpdateRoomPlayers))]
-    [Union(10, typeof(DistributeGameMessage))]
+    [Union(10, typeof(BroadcastGameMessages))]
+    [Union(11, typeof(NotifyRoomOperation))]
     public interface IServerMsg
     {
         [MessagePackObject]
@@ -269,15 +270,27 @@ namespace SquirrelayServer.Common
         }
 
         [MessagePackObject]
-        public sealed class DistributeGameMessage : IServerMsg
+        public sealed class BroadcastGameMessages : IServerMsg
         {
             [Key(0)]
             public IReadOnlyList<RelayedGameMessage> Messages { get; private set; }
 
             [SerializationConstructor]
-            public DistributeGameMessage(IReadOnlyList<RelayedGameMessage> messages)
+            public BroadcastGameMessages(IReadOnlyList<RelayedGameMessage> messages)
             {
                 Messages = messages;
+            }
+        }
+
+        [MessagePackObject]
+        public sealed class NotifyRoomOperation : IServerMsg
+        {
+            [Key(0)]
+            public RoomOperateKind Operate { get; private set; }
+
+            public NotifyRoomOperation(RoomOperateKind operate)
+            {
+                Operate = operate;
             }
         }
     }

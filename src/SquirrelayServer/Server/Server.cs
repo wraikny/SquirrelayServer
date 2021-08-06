@@ -83,7 +83,7 @@ namespace SquirrelayServer.Server
 
             if (!_manager.Start(_config.NetConfig.Port))
             {
-                throw new Exception("Failed to start the Server");
+                throw new Exception("Failed to start the Server.");
             }
 
             NetDebug.Logger.WriteNet(NetLogLevel.Info, "Server started at port {0}.", _config.NetConfig.Port);
@@ -254,7 +254,7 @@ namespace SquirrelayServer.Server
 
             void INetEventListener.OnNetworkError(IPEndPoint endPoint, SocketError socketError)
             {
-                NetDebug.Logger.WriteNet(NetLogLevel.Error, $"NetworkError at {endPoint} with {Enum.GetName(typeof(SocketError), socketError)}");
+                NetDebug.Logger.WriteNet(NetLogLevel.Error, $"NetworkError at {endPoint} with {Enum.GetName(typeof(SocketError), socketError)}.");
             }
 
             void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)

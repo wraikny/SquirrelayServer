@@ -67,7 +67,7 @@ namespace SquirrelayServer.Common
         /// </summary>
         public void Receive(TRecv msg)
         {
-            _receivers.RemoveAll(r =>
+            var index = _receivers.FindIndex(r =>
             {
                 if (r.Type.IsAssignableFrom(msg.GetType()))
                 {
@@ -77,6 +77,8 @@ namespace SquirrelayServer.Common
 
                 return false;
             });
+
+            _receivers.RemoveAt(index);
         }
 
         /// <summary>

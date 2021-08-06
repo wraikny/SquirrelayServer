@@ -142,7 +142,7 @@ namespace SquirrelayServer.Tests
             clientMock0.Setup(s => s.Send(It.IsAny<IServerMsg>(), It.IsAny<byte>(), It.IsAny<LiteNetLib.DeliveryMethod>()))
                 .Callback((IServerMsg message, byte channelNumber, LiteNetLib.DeliveryMethod deliveryMethod) =>
                 {
-                    if (message is IServerMsg.DistributeGameMessage msg)
+                    if (message is IServerMsg.BroadcastGameMessages msg)
                     {
                         Assert.Equal(msg.Messages[0].ClientId, clientMock0.Object.Id);
                         Assert.True(Enumerable.SequenceEqual(msg.Messages[0].Data, msg0.Data));

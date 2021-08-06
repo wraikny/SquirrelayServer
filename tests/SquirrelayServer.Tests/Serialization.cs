@@ -136,7 +136,7 @@ namespace SquirrelayServer.Tests
         {
             {
                 var msgs = new List<RelayedGameMessage>();
-                Check<IServerMsg.DistributeGameMessage, IServerMsg>(new IServerMsg.DistributeGameMessage(msgs));
+                Check<IServerMsg.BroadcastGameMessages, IServerMsg>(new IServerMsg.BroadcastGameMessages(msgs));
             }
 
             {
@@ -144,7 +144,7 @@ namespace SquirrelayServer.Tests
                 msgs.Add(new RelayedGameMessage(0uL, 1.0f, new byte[1]));
                 msgs.Add(new RelayedGameMessage(1uL, 1.1f, new byte[1]));
                 msgs.Add(new RelayedGameMessage(2uL, 0.0f, null));
-                Check<IServerMsg.DistributeGameMessage, IServerMsg>(new IServerMsg.DistributeGameMessage(msgs));
+                Check<IServerMsg.BroadcastGameMessages, IServerMsg>(new IServerMsg.BroadcastGameMessages(msgs));
             }
         }
 

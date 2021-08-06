@@ -26,7 +26,7 @@ namespace SquirrelayServer.Server
         // StopWatch for counting game time.
         private readonly Stopwatch _gameStopWatch;
 
-        private readonly List<RelayedGameMessage> _temporalGameMessageBuffer;
+        private readonly List<RelayedGameMessage> _temporalGameMessagesBuffer;
 
 
         internal IReadOnlyDictionary<ulong, RoomPlayerStatus> PlayerStatuses => _playersStatuses;
@@ -50,7 +50,7 @@ namespace SquirrelayServer.Server
 
             _disposeStopwatch = new Stopwatch();
             _gameStopWatch = new Stopwatch();
-            _temporalGameMessageBuffer = new List<RelayedGameMessage>();
+            _temporalGameMessagesBuffer = new List<RelayedGameMessage>();
 
             Id = id;
             Info = info;
@@ -109,9 +109,9 @@ namespace SquirrelayServer.Server
             // When playing the game
             if (RoomStatus == RoomStatus.Playing)
             {
-                var msg = new IServerMsg.DistributeGameMessage(_temporalGameMessageBuffer);
+                var msg = new IServerMsg.BroadcastGameMessages(_temporalGameMessagesBuffer);
                 Broadcast(msg);
-                _temporalGameMessageBuffer.Clear();
+                _temporalGameMessagesBuffer.Clear();
             }
         }
 
@@ -195,7 +195,7 @@ namespace SquirrelayServer.Server
                         Info.IsPlaying = true;
                         _gameStopWatch.Start();
 
-                        // todo
+                        Broadcast(new IServerMsg.NotifyRoomOperation(kind));
 
                         break;
                     }
@@ -210,7 +210,7 @@ namespace SquirrelayServer.Server
                         RoomStatus = RoomStatus.WaitingToPlay;
                         Info.IsPlaying = false;
 
-                        // todo
+                        Broadcast(new IServerMsg.NotifyRoomOperation(kind));
 
                         break;
                     }
@@ -237,7 +237,7 @@ namespace SquirrelayServer.Server
 
             var msg = new RelayedGameMessage(client.Id, Utils.MsToSec((int)_gameStopWatch.ElapsedMilliseconds), data);
 
-            _temporalGameMessageBuffer.Add(msg);
+            _temporalGameMessagesBuffer.Add(msg);
 
             return IServerMsg.SendGameMessageResponse.Success;
         }
