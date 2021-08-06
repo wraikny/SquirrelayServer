@@ -43,7 +43,7 @@ namespace SquirrelayServer.Common
 
             [Key(2)]
             public int MaxNumberOfPlayers { get; private set; }
-            
+
             [Key(3)]
             public byte[] PlayerStatus { get; private set; }
 

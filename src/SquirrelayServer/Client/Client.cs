@@ -134,7 +134,7 @@ namespace SquirrelayServer.Client
 
             List<Exception> exceptions = null;
 
-            while(_context.TryDequeue(out var action))
+            while (_context.TryDequeue(out var action))
             {
                 try
                 {
