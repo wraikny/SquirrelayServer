@@ -125,7 +125,7 @@ namespace SquirrelayServer.Server
                 IsVisible = _roomConfig.InvisibleEnabled ? msg.IsVisible : true,
                 MaxNumberOfPlayers = Utils.Clamp(msg.MaxNumberOfPlayers, maxRange.Item1, maxRange.Item2),
                 NumberOfPlayers = 0,
-                Status = _roomConfig.RoomMessageEnabled ? msg.RoomStatus : null,
+                Message = _roomConfig.RoomMessageEnabled ? msg.RoomMessage : null,
             };
 
             var password = _roomConfig.PasswordEnabled ? msg.Password : null;

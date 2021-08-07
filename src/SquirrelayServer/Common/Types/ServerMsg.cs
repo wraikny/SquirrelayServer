@@ -118,19 +118,19 @@ namespace SquirrelayServer.Common
             public IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses { get; private set; }
 
             [Key(3)]
-            public byte[] RoomStatus { get; private set; }
+            public byte[] RoomMessage { get; private set; }
 
             [IgnoreMember]
             public bool IsSuccess => Result == ResultKind.Success;
 
 
             [SerializationConstructor]
-            public EnterRoomResponse(ResultKind result, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomStatus)
+            public EnterRoomResponse(ResultKind result, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomMessage)
             {
                 Result = result;
                 OwnerId = ownerId;
                 Statuses = statuses;
-                RoomStatus = roomStatus;
+                RoomMessage = roomMessage;
             }
 
             public EnterRoomResponse(ResultKind result)
@@ -138,11 +138,11 @@ namespace SquirrelayServer.Common
                 Result = result;
                 OwnerId = null;
                 Statuses = null;
-                RoomStatus = null;
+                RoomMessage = null;
             }
 
-            internal static EnterRoomResponse Success(ulong ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomStatus)
-                => new EnterRoomResponse(ResultKind.Success, ownerId, statuses, roomStatus);
+            internal static EnterRoomResponse Success(ulong ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomMessage)
+                => new EnterRoomResponse(ResultKind.Success, ownerId, statuses, roomMessage);
             internal static readonly EnterRoomResponse RoomNotFound = new EnterRoomResponse(ResultKind.RoomNotFound);
             internal static readonly EnterRoomResponse InvalidPassword = new EnterRoomResponse(ResultKind.InvalidPassword);
             internal static readonly EnterRoomResponse NumberOfPlayersLimitation = new EnterRoomResponse(ResultKind.NumberOfPlayersLimitation);

@@ -36,7 +36,7 @@ namespace ClientExample
 
             var options = Options.DefaultOptions;
 
-            var client = new Client<PlayerStatus, RoomStatus, GameMessage>(config.NetConfig, options, options);
+            var client = new Client<PlayerStatus, RoomMessage, GameMessage>(config.NetConfig, options, options);
 
             _ = Task.Run(async () => {
                 while (true)
@@ -50,7 +50,7 @@ namespace ClientExample
 
             var msg = new GameMessage { Message = "Hello, world!" };
 
-            var listener = new EventBasedClientLIstener<PlayerStatus, RoomStatus, GameMessage>();
+            var listener = new EventBasedClientLIstener<PlayerStatus, RoomMessage, GameMessage>();
 
             listener.OnGameMessageReceived += (clientId, elapsedSeconds, message) => {
                 NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Message received: '{message.Message}'");

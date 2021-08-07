@@ -48,17 +48,17 @@ namespace SquirrelayServer.Common
             public byte[] PlayerStatus { get; private set; }
 
             [Key(4)]
-            public byte[] RoomStatus { get; private set; }
+            public byte[] RoomMessage { get; private set; }
 
 
             [SerializationConstructor]
-            public CreateRoom(bool isVisible, string password, int maxNumberOfPlayers, byte[] playerStatus, byte[] roomStatus)
+            public CreateRoom(bool isVisible, string password, int maxNumberOfPlayers, byte[] playerStatus, byte[] roomMessage)
             {
                 IsVisible = isVisible;
                 Password = password;
                 MaxNumberOfPlayers = maxNumberOfPlayers;
                 PlayerStatus = playerStatus;
-                RoomStatus = roomStatus;
+                RoomMessage = roomMessage;
             }
         }
 

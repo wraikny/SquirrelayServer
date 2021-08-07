@@ -105,8 +105,8 @@ namespace SquirrelayServer.Tests
             {
                 ulong? owner = null;
                 var statuses = new Dictionary<ulong, RoomPlayerStatus>();
-                var roomStatus = new byte[1];
-                Check<IServerMsg.UpdateRoomPlayersAndMessage, IServerMsg>(new IServerMsg.UpdateRoomPlayersAndMessage(owner, statuses, roomStatus));
+                var roomMessage = new byte[1];
+                Check<IServerMsg.UpdateRoomPlayersAndMessage, IServerMsg>(new IServerMsg.UpdateRoomPlayersAndMessage(owner, statuses, roomMessage));
             }
 
             {
@@ -128,8 +128,8 @@ namespace SquirrelayServer.Tests
                         }
                     }
                 };
-                var roomStatuses = new byte[1];
-                Check<IServerMsg.UpdateRoomPlayersAndMessage, IServerMsg>(new IServerMsg.UpdateRoomPlayersAndMessage(owner, statuses, roomStatuses));
+                var roomMessage = new byte[1];
+                Check<IServerMsg.UpdateRoomPlayersAndMessage, IServerMsg>(new IServerMsg.UpdateRoomPlayersAndMessage(owner, statuses, roomMessage));
             }
         }
 

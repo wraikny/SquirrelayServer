@@ -25,10 +25,31 @@ namespace SquirrelayServer.Common
         public int NumberOfPlayers { get; set; }
 
         [Key(3)]
-        public byte[] Status { get; set; }
+        public byte[] Message { get; set; }
 
         [Key(4)]
         public bool IsPlaying { get; set; }
+    }
+
+    public class RoomInfo<T>
+    {
+        public bool IsVisible { get; set; }
+        public int MaxNumberOfPlayers { get; set; }
+
+        public int NumberOfPlayers { get; set; }
+
+        public T Message { get; set; }
+
+        public bool IsPlaying { get; set; }
+
+        public RoomInfo(RoomInfo roomInfo, T message)
+        {
+            IsVisible = roomInfo.IsVisible;
+            MaxNumberOfPlayers = roomInfo.MaxNumberOfPlayers;
+            NumberOfPlayers = roomInfo.NumberOfPlayers;
+            IsPlaying = roomInfo.IsPlaying;
+            Message = message;
+        }
     }
 
     public enum RoomOperateKind

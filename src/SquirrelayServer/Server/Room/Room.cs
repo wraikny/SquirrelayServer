@@ -105,7 +105,7 @@ namespace SquirrelayServer.Server
                     }
                 }
 
-                var msg = new IServerMsg.UpdateRoomPlayersAndMessage(_owner, _updatedPlayersStatuses, Info.Status);
+                var msg = new IServerMsg.UpdateRoomPlayersAndMessage(_owner, _updatedPlayersStatuses, Info.Message);
                 Broadcast(msg);
 
                 // clear
@@ -157,7 +157,7 @@ namespace SquirrelayServer.Server
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): client({client.Id}) entered.");
 
-            return IServerMsg.EnterRoomResponse.Success(_owner.Value, _playersStatuses, Info.Status);
+            return IServerMsg.EnterRoomResponse.Success(_owner.Value, _playersStatuses, Info.Message);
         }
 
         public IServerMsg.ExitRoomResponse ExitRoom(IClientHandler client)
@@ -274,7 +274,7 @@ namespace SquirrelayServer.Server
         {
             if (client.Id != _owner) return IServerMsg.SetRoomMessageResponse.PlayerIsNotOwner;
 
-            Info.Status = roomStatus;
+            Info.Message = roomStatus;
             _updatedRoomStatus = true;
 
             return IServerMsg.SetRoomMessageResponse.Success;

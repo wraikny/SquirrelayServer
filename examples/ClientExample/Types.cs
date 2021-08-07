@@ -15,7 +15,7 @@ namespace ClientExample
     }
 
     [MessagePackObject]
-    public sealed class RoomStatus
+    public sealed class RoomMessage
     {
 
     }

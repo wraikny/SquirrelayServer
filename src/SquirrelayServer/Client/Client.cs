@@ -209,13 +209,30 @@ namespace SquirrelayServer.Client
         /// Request to retrieve a list of rooms. Rooms that are set to invisible cannot be retrieved.
         /// </summary>
         /// <returns></returns>
-        public async Task<IReadOnlyCollection<RoomInfo>> RequestGetRoomListAsync()
+        public async Task<IReadOnlyCollection<RoomInfo<TRoomMessage>>> RequestGetRoomListAsync()
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
             _messageHandler.Send(IClientMsg.GetRoomList.Instance);
             var res = await _messageHandler.WaitMsgOfType<IServerMsg.RoomListResponse>();
-            return res.Info;
+
+            var infoList = new List<RoomInfo<TRoomMessage>>();
+            foreach (var info in res.Info)
+            {
+                TRoomMessage message = null;
+                try
+                {
+                    message = MessagePackSerializer.Deserialize<TRoomMessage>(info.Message, _clientsSerializerOptions);
+                }
+                catch
+                {
+
+                }
+
+                infoList.Add(new RoomInfo<TRoomMessage>(info, message));
+            }
+
+            return infoList;
         }
 
         /// <summary>
@@ -235,10 +252,10 @@ namespace SquirrelayServer.Client
             password = RoomConfig.PasswordEnabled ? password : null;
             var maxNum = maxNumberOfPlayers ?? RoomConfig.NumberOfPlayersRange.Item2;
             var playerStatusData = playerStatus is null ? null : MessagePackSerializer.Serialize(playerStatus, _clientsSerializerOptions);
-            var roomStatusData = RoomConfig.RoomMessageEnabled ? MessagePackSerializer.Serialize(roomMessage, _clientsSerializerOptions) : null;
+            var roomMessageData = RoomConfig.RoomMessageEnabled ? MessagePackSerializer.Serialize(roomMessage, _clientsSerializerOptions) : null;
 
 
-            _messageHandler.Send(new IClientMsg.CreateRoom(isVisible, password, maxNum, playerStatusData, roomStatusData));
+            _messageHandler.Send(new IClientMsg.CreateRoom(isVisible, password, maxNum, playerStatusData, roomMessageData));
             var res = await _messageHandler.WaitMsgOfType<IServerMsg.CreateRoomResponse>();
 
             if (res.IsSuccess)
@@ -267,7 +284,7 @@ namespace SquirrelayServer.Client
 
             if (res.IsSuccess)
             {
-                CurrentRoom = CreateCurrentRoomInfo(roomId, res.OwnerId, res.Statuses, res.RoomStatus);
+                CurrentRoom = CreateCurrentRoomInfo(roomId, res.OwnerId, res.Statuses, res.RoomMessage);
             }
 
             return res;
