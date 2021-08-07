@@ -21,7 +21,7 @@ namespace SquirrelayServer.Client
         private readonly MessagePackSerializerOptions _clientsSerializerOptions;
         private readonly NetManager _manager;
 
-        private readonly Queue<Action> _context;
+        private readonly Queue<Action> _updateContext;
 
         private readonly List<RelayedGameMessage> _gameMessages;
 
@@ -53,7 +53,7 @@ namespace SquirrelayServer.Client
             Id = null;
             IsStarted = false;
 
-            _context = new Queue<Action>();
+            _updateContext = new Queue<Action>();
 
             _manager = new NetManager(new Listener(this))
             {
@@ -102,6 +102,7 @@ namespace SquirrelayServer.Client
 
             _listener = listener;
 
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client is waiting to be connected.");
             while (_messageHandler is null)
             {
                 await Task.Delay(_netConfig.UpdateTime);
@@ -110,6 +111,8 @@ namespace SquirrelayServer.Client
             var hello = await _messageHandler.WaitMsgOfType<IServerMsg.Hello>();
             Id = hello.Id;
             RoomConfig = hello.RoomConfig;
+
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Hello from server, received self id({Id}).");
 
             IsConnected = true;
         }
@@ -121,14 +124,20 @@ namespace SquirrelayServer.Client
         {
             if (!IsStarted) return;
 
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client stop.");
+
             _manager.DisconnectAll();
             _manager.Stop(true);
 
-            _context.Clear();
+            _updateContext.Clear();
 
             _listener = null;
-            _messageHandler.Cancel();
-            _messageHandler = null;
+
+            if (_messageHandler is { })
+            {
+                _messageHandler.Cancel();
+                _messageHandler = null;
+            }
 
             _gameMessages.Clear();
 
@@ -143,14 +152,18 @@ namespace SquirrelayServer.Client
         /// </summary>
         public void Update()
         {
-            _manager?.PollEvents();
+            if (_manager.IsRunning)
+            {
+                _manager?.PollEvents();
+            }
 
             if (!IsStarted || !IsConnected) return;
 
             List<Exception> exceptions = null;
 
-            while (_context.TryDequeue(out var action))
+            while (_updateContext.TryDequeue(out var action))
             {
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Client updateContext");
                 try
                 {
                     action?.Invoke();
@@ -408,7 +421,7 @@ namespace SquirrelayServer.Client
             if (currentRoomInfo.OwnerId != msg.Owner)
             {
                 currentRoomInfo.OwnerId = msg.Owner;
-                _context.Enqueue(() => { _listener.OnOwnerChanged(msg.Owner); });
+                _updateContext.Enqueue(() => { _listener.OnOwnerChanged(msg.Owner); });
             }
 
             foreach (var (k, v) in msg.Statuses)
@@ -416,7 +429,7 @@ namespace SquirrelayServer.Client
                 if (v is null)
                 {
                     currentRoomInfo.PlayerStatusesImpl.Remove(k);
-                    _context.Enqueue(() => { _listener.OnPlayerExited(k); });
+                    _updateContext.Enqueue(() => { _listener.OnPlayerExited(k); });
                 }
                 else
                 {
@@ -436,11 +449,11 @@ namespace SquirrelayServer.Client
 
                     if (currentRoomInfo.PlayerStatusesImpl.ContainsKey(k))
                     {
-                        _context.Enqueue(() => { _listener.OnPlayerEntered(k, status); });
+                        _updateContext.Enqueue(() => { _listener.OnPlayerEntered(k, status); });
                     }
                     else
                     {
-                        _context.Enqueue(() => { _listener.OnPlayerStatusUpdated(k, status); });
+                        _updateContext.Enqueue(() => { _listener.OnPlayerStatusUpdated(k, status); });
                     }
 
                     currentRoomInfo.PlayerStatusesImpl[k] = status;
@@ -469,7 +482,7 @@ namespace SquirrelayServer.Client
                 var sender = new NetPeerSender<IClientMsg>(peer, _client._serverSerializerOptions);
                 _client._messageHandler = new MessageHandler<IClientMsg, IServerMsg>(sender);
 
-                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Connected to server.");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Connected to the server.");
             }
 
             void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
@@ -497,6 +510,8 @@ namespace SquirrelayServer.Client
                     reader.Recycle();
                 }
 
+                NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Received message of {msg.GetType()}.");
+
                 switch (msg)
                 {
                     case IServerMsg.BroadcastGameMessages m:
@@ -510,10 +525,10 @@ namespace SquirrelayServer.Client
                             switch (m.Operate)
                             {
                                 case RoomOperateKind.StartPlaying:
-                                    _client._context.Enqueue(() => _client._listener.OnGameStarted());
+                                    _client._updateContext.Enqueue(() => _client._listener.OnGameStarted());
                                     break;
                                 case RoomOperateKind.FinishPlaying:
-                                    _client._context.Enqueue(() => _client._listener.OnGameFinished());
+                                    _client._updateContext.Enqueue(() => _client._listener.OnGameFinished());
                                     break;
                                 default: break;
                             }

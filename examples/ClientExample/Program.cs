@@ -25,12 +25,15 @@ namespace ClientExample
 
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
             NetDebug.Logger = new Logger();
 
+            var context = new Examples.Context();
+            SynchronizationContext.SetSynchronizationContext(context);
+
             var configPath = @"config/config.json";
-            var config = await Config.LoadFromFileAsync(configPath);
+            var config = Config.LoadFromFile(configPath);
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Config is loaded from '{configPath}'.");
 
@@ -38,14 +41,20 @@ namespace ClientExample
 
             var client = new Client<PlayerStatus, RoomMessage, GameMessage>(config.NetConfig, options, options);
 
-            _ = Task.Run(async () => {
-                while (true)
-                {
-                    client.Update();
-                    await Task.Delay(config.NetConfig.UpdateTime);
-                }
-            });
+            var task = Run(client);
 
+            while (!task.IsCompleted)
+            {
+                context.Update();
+
+                client.Update();
+
+                Thread.Sleep(config.NetConfig.UpdateTime);
+            }
+        }
+
+        private static async Task Run(Client<PlayerStatus, RoomMessage, GameMessage> client)
+        {
             var messageReceivedCount = 0;
 
             var msg = new GameMessage { Message = "Hello, world!" };

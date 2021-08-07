@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+      <Compile Include="..\Shared\**\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\SquirrelayServer\SquirrelayServer.csproj" />
   </ItemGroup>
 

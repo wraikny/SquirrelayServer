@@ -21,8 +21,6 @@ namespace SquirrelayServer.Client
         where TPlayerStatus : class
         where TRoomMessage : class
     {
-        private readonly MessagePackSerializerOptions _options;
-
         public int Id { get; internal set; }
 
         public ulong? OwnerId { get; internal set; }

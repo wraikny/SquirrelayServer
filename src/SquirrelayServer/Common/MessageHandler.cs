@@ -78,7 +78,10 @@ namespace SquirrelayServer.Common
                 return false;
             });
 
-            _receivers.RemoveAt(index);
+            if (index != -1)
+            {
+                _receivers.RemoveAt(index);
+            }
         }
 
         /// <summary>

@@ -66,6 +66,7 @@ namespace SquirrelayServer.Server
 
         public void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered)
         {
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Send message of {msg.GetType()} to client({Id}).");
             _handler.Send(msg, channel, method);
         }
 

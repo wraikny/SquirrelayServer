@@ -80,6 +80,8 @@ namespace SquirrelayServer.Server
             {
                 client.SendByte(data);
             }
+
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Send message of {msg.GetType()} to clients in room({Id}).");
         }
 
         private void UpdatePlayerStatus(ulong clientId, RoomPlayerStatus status)
@@ -114,7 +116,7 @@ namespace SquirrelayServer.Server
             }
 
             // When playing the game
-            if (RoomStatus == RoomStatus.Playing)
+            if (RoomStatus == RoomStatus.Playing && _temporalGameMessagesBuffer.Count > 0)
             {
                 var msg = new IServerMsg.BroadcastGameMessages(_temporalGameMessagesBuffer);
                 Broadcast(msg);
