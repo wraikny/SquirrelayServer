@@ -63,18 +63,18 @@ namespace ClientExample
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client started");
 
-            var clientsCount = await client.GetClientsCountAsync();
+            var clientsCount = await client.RequestGetClientsCountAsync();
             Assert.True(clientsCount == 1);
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Clients count:{clientsCount}");
 
             {
-                var roomList = await client.GetRoomListAsync();
+                var roomList = await client.RequestGetRoomListAsync();
                 Assert.True(roomList.Count == 0);
                 NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"RoomList.Count:{roomList.Count}");
             }
 
-            var createRoomRes = await client.CreateRoomAsync();
+            var createRoomRes = await client.RequestCreateRoomAsync();
             Assert.True(createRoomRes.IsSuccess);
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Success to create room:{createRoomRes.Id}");
 
@@ -82,14 +82,14 @@ namespace ClientExample
             Assert.True(client.IsOwner);
 
             {
-                var roomList = await client.GetRoomListAsync();
+                var roomList = await client.RequestGetRoomListAsync();
                 Assert.True(roomList.Count == 1);
                 NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"RoomList.Count:{roomList.Count}");
             }
 
-            var gameStartRes = await client.StartPlayingAsync();
+            var gameStartRes = await client.RequestStartPlayingAsync();
 
-            var sendRes = await client.SendGameMessage(msg);
+            var sendRes = await client.RequestSendGameMessage(msg);
 
             Assert.True(sendRes.IsSuccess);
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Send game message.");
@@ -97,6 +97,8 @@ namespace ClientExample
             await Task.Delay(2000);
 
             Assert.True(messageReceivedCount == 1);
+
+            client.Stop();
         }
 
         private static class Assert

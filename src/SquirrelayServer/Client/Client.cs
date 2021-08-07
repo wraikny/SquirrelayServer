@@ -80,6 +80,12 @@ namespace SquirrelayServer.Client
 #endif
         }
 
+        /// <summary>
+        /// Start the connection to the server
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="listener"></param>
+        /// <returns></returns>
         public async Task Start(string host, IClientListener<TPlayerStatus, TRoomMessage, TMsg> listener)
         {
             if (IsStarted)
@@ -108,8 +114,14 @@ namespace SquirrelayServer.Client
             IsConnected = true;
         }
 
+        /// <summary>
+        /// Stop the connection to the server
+        /// </summary>
         public void Stop()
         {
+            if (!IsStarted) return;
+
+            _manager.DisconnectAll();
             _manager.Stop(true);
 
             _context.Clear();
@@ -126,6 +138,9 @@ namespace SquirrelayServer.Client
             IsStarted = false;
         }
 
+        /// <summary>
+        /// Update the client to handle messages from the server.
+        /// </summary>
         public void Update()
         {
             _manager?.PollEvents();
@@ -177,7 +192,11 @@ namespace SquirrelayServer.Client
             }
         }
 
-        public async Task<int> GetClientsCountAsync()
+        /// <summary>
+        /// Request to retrieve the number of clients currently connected to the server.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<int> RequestGetClientsCountAsync()
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
@@ -186,7 +205,11 @@ namespace SquirrelayServer.Client
             return res.Count;
         }
 
-        public async Task<IReadOnlyCollection<RoomInfo>> GetRoomListAsync()
+        /// <summary>
+        /// Request to retrieve a list of rooms. Rooms that are set to invisible cannot be retrieved.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IReadOnlyCollection<RoomInfo>> RequestGetRoomListAsync()
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
@@ -195,7 +218,16 @@ namespace SquirrelayServer.Client
             return res.Info;
         }
 
-        public async Task<IServerMsg.CreateRoomResponse> CreateRoomAsync(bool isVisible = true, string password = null, int? maxNumberOfPlayers = null, TPlayerStatus playerStatus = null, TRoomMessage roomMessage = null)
+        /// <summary>
+        /// Request to create a new room and to enter it.
+        /// </summary>
+        /// <param name="isVisible"></param>
+        /// <param name="password"></param>
+        /// <param name="maxNumberOfPlayers"></param>
+        /// <param name="playerStatus"></param>
+        /// <param name="roomMessage"></param>
+        /// <returns></returns>
+        public async Task<IServerMsg.CreateRoomResponse> RequestCreateRoomAsync(bool isVisible = true, string password = null, int? maxNumberOfPlayers = null, TPlayerStatus playerStatus = null, TRoomMessage roomMessage = null)
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
@@ -217,7 +249,14 @@ namespace SquirrelayServer.Client
             return res;
         }
 
-        public async Task<IServerMsg.EnterRoomResponse> EnterRoomAsync(int roomId, string password = null, TPlayerStatus playerStatus = null)
+        /// <summary>
+        /// Request to enter the specified room.
+        /// </summary>
+        /// <param name="roomId"></param>
+        /// <param name="password"></param>
+        /// <param name="playerStatus"></param>
+        /// <returns></returns>
+        public async Task<IServerMsg.EnterRoomResponse> RequestEnterRoomAsync(int roomId, string password = null, TPlayerStatus playerStatus = null)
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
@@ -234,7 +273,11 @@ namespace SquirrelayServer.Client
             return res;
         }
 
-        public Task<IServerMsg.ExitRoomResponse> ExitRoomAsync()
+        /// <summary>
+        /// Request to leave the room.
+        /// </summary>
+        /// <returns></returns>
+        public Task<IServerMsg.ExitRoomResponse> RequestExitRoomAsync()
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
@@ -242,7 +285,11 @@ namespace SquirrelayServer.Client
             return _messageHandler.WaitMsgOfType<IServerMsg.ExitRoomResponse>();
         }
 
-        public Task<IServerMsg.OperateRoomResponse> StartPlayingAsync()
+        /// <summary>
+        /// Request to start a game in a room. This operation can only be performed by the owner.
+        /// </summary>
+        /// <returns></returns>
+        public Task<IServerMsg.OperateRoomResponse> RequestStartPlayingAsync()
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
@@ -250,7 +297,11 @@ namespace SquirrelayServer.Client
             return _messageHandler.WaitMsgOfType<IServerMsg.OperateRoomResponse>();
         }
 
-        public Task<IServerMsg.OperateRoomResponse> FinishPlayingAsync()
+        /// <summary>
+        /// Request to finish a game in a room. This operation can only be performed by the owner.
+        /// </summary>
+        /// <returns></returns>
+        public Task<IServerMsg.OperateRoomResponse> RequestFinishPlayingAsync()
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
@@ -258,7 +309,12 @@ namespace SquirrelayServer.Client
             return _messageHandler.WaitMsgOfType<IServerMsg.OperateRoomResponse>();
         }
 
-        public Task<IServerMsg.SetPlayerStatusResponse> SetPlayerStatusAsync(TPlayerStatus status)
+        /// <summary>
+        /// Request to set the client's own status in the room.
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public Task<IServerMsg.SetPlayerStatusResponse> RequestSetPlayerStatusAsync(TPlayerStatus status)
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
@@ -267,7 +323,12 @@ namespace SquirrelayServer.Client
             return _messageHandler.WaitMsgOfType<IServerMsg.SetPlayerStatusResponse>();
         }
 
-        public Task<IServerMsg.SetRoomMessageResponse> SetRoomMessageAsync(TRoomMessage roomMessage)
+        /// <summary>
+        /// Request to set a message for the room. This operation can only be performed by the owner.
+        /// </summary>
+        /// <param name="roomMessage"></param>
+        /// <returns></returns>
+        public Task<IServerMsg.SetRoomMessageResponse> RequestSetRoomMessageAsync(TRoomMessage roomMessage)
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
@@ -276,7 +337,12 @@ namespace SquirrelayServer.Client
             return _messageHandler.WaitMsgOfType<IServerMsg.SetRoomMessageResponse>();
         }
 
-        public Task<IServerMsg.SendGameMessageResponse> SendGameMessage(TMsg message)
+        /// <summary>
+        /// Request to send a game message to be broadcasted.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public Task<IServerMsg.SendGameMessageResponse> RequestSendGameMessage(TMsg message)
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
