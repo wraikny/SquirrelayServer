@@ -403,7 +403,7 @@ namespace SquirrelayServer.Client
                         }
                         catch
                         {
-                            currentRoomInfo.PlayerStatusesImpl[k] = null;
+                            //currentRoomInfo.PlayerStatusesImpl[k] = null;
                             NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize player status from client({k}).");
                         }
                     }
@@ -444,6 +444,7 @@ namespace SquirrelayServer.Client
                         catch
                         {
                             NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize player status from client({k}).");
+                            continue;
                         }
                     }
 
