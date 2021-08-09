@@ -2,7 +2,7 @@
     "netConfig": {
         "connectionKey": "SomeKey",
         "port": 8080,
-        "mexClientsCount": 32,
+        "maxClientsCount": 32,
         "updateTime": 20,
         "natPunchEnabled": false,
         "pingInterval": 1000,
