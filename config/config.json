@@ -3,7 +3,7 @@
         "connectionKey": "SomeKey",
         "port": 8080,
         "mexClientsCount": 32,
-        "updateTime": 50,
+        "updateTime": 20,
         "natPunchEnabled": false,
         "pingInterval": 1000,
         "disconnectTimeout": 5000,
