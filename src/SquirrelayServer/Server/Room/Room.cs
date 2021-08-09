@@ -148,7 +148,7 @@ namespace SquirrelayServer.Server
             if (Password is string p && p != password) return IServerMsg.EnterRoomResponse.InvalidPassword;
             if (Info.MaxNumberOfPlayers == _clients.Count) return IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation;
 
-            if (!_roomConfig.EnterWhenPlaingAllowed && RoomStatus == RoomStatus.Playing)
+            if (!_roomConfig.EnterWhenPlayingAllowed && RoomStatus == RoomStatus.Playing)
             {
                 return IServerMsg.EnterRoomResponse.InvalidRoomStatus;
             }

@@ -17,7 +17,7 @@
         "invisibleEnabled": true,
         "roomMessageEnabled": true,
         "passwordEnabled": true,
-        "enterWhenPlaingAllowed": true,
+        "enterWhenPlayingAllowed": true,
         "disposeSecondsWhenNoMember": 20.0,
         "updatingDisposeStatusIntervalSeconds": 10.0,
         "numberOfPlayersRange": [ 2, 6 ],

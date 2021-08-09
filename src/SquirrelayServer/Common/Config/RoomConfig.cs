@@ -29,7 +29,7 @@ namespace SquirrelayServer.Common
 
         [DataMember(Name = "enterWhenPlaingAllowed")]
         [Key(3)]
-        public bool EnterWhenPlaingAllowed { get; set; }
+        public bool EnterWhenPlayingAllowed { get; set; }
 
         [DataMember(Name = "disposeSecondsWhenNoMember")]
         [Key(4)]
@@ -106,7 +106,7 @@ namespace SquirrelayServer.Common
             return (InvisibleEnabled == other.InvisibleEnabled)
                 && (RoomMessageEnabled == other.RoomMessageEnabled)
                 && (PasswordEnabled == other.PasswordEnabled)
-                && (EnterWhenPlaingAllowed == other.EnterWhenPlaingAllowed)
+                && (EnterWhenPlayingAllowed == other.EnterWhenPlayingAllowed)
                 && (DisposeSecondsWhenNoMember == other.DisposeSecondsWhenNoMember)
                 && (UpdatingDisposeStatusIntervalSeconds == other.UpdatingDisposeStatusIntervalSeconds)
                 && (NumberOfPlayersRange == other.NumberOfPlayersRange)
@@ -119,7 +119,7 @@ namespace SquirrelayServer.Common
                 InvisibleEnabled,
                 RoomMessageEnabled,
                 PasswordEnabled,
-                EnterWhenPlaingAllowed,
+                EnterWhenPlayingAllowed,
                 DisposeSecondsWhenNoMember,
                 UpdatingDisposeStatusIntervalSeconds,
                 NumberOfPlayersRange,

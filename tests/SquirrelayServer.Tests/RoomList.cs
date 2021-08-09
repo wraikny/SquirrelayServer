@@ -20,7 +20,7 @@ namespace SquirrelayServer.Tests
             InvisibleEnabled = true,
             RoomMessageEnabled = true,
             PasswordEnabled = true,
-            EnterWhenPlaingAllowed = true,
+            EnterWhenPlayingAllowed = true,
             DisposeSecondsWhenNoMember = 120,
             UpdatingDisposeStatusIntervalSeconds = 10.0f,
             NumberOfPlayersRange = (2, 6),
