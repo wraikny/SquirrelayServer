@@ -147,7 +147,7 @@ namespace SquirrelayServer.Server
                 {
                     request.Reject();
 
-                    NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Rejected connection request because of the connected clients count.");
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Rejected connection request because of the MaxClientsCount.");
 
                 }
             }

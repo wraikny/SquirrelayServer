@@ -111,6 +111,11 @@ namespace SquirrelayServer.Client
             while (_messageHandler is null)
             {
                 await Task.Delay(_netConfig.UpdateTime);
+
+                if (!IsStarted)
+                {
+                    throw new OperationCanceledException("Failed to wait connection bacause client is stopped.");
+                }
             }
 
             var hello = await _messageHandler.WaitMsgOfType<IServerMsg.Hello>();
@@ -118,8 +123,6 @@ namespace SquirrelayServer.Client
             RoomConfig = hello.RoomConfig;
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Hello from server, received self id({Id}).");
-
-            IsConnected = true;
         }
 
         /// <summary>
@@ -483,6 +486,7 @@ namespace SquirrelayServer.Client
 
             void INetEventListener.OnPeerConnected(NetPeer peer)
             {
+                _client.IsConnected = true;
                 NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Connected to the server.");
 
                 var sender = new NetPeerSender<IClientMsg>(peer, _client._serverSerializerOptions);
@@ -491,9 +495,9 @@ namespace SquirrelayServer.Client
 
             void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
             {
+                _client.IsConnected = false;
                 NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Disconnected from server.");
 
-                _client.IsConnected = false;
                 _client.Stop();
             }
 
