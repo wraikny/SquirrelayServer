@@ -42,7 +42,7 @@ namespace SquirrelayServer.Common
         [DataMember(Name = "disconnectTimeout")]
         private readonly int? _disconnectTimeout;
         [IgnoreDataMember]
-        public int DisconnectedTimeout { get; set; }
+        public int DisconnectTimeout { get; set; }
 
 #if DEBUG
         [DataMember(Name = "debugOnly")]
@@ -111,7 +111,7 @@ namespace SquirrelayServer.Common
         {
             NatPunchEnabled = _natPunchEnabled ?? false;
             PingInterval = _pingInterval ?? 1000;
-            DisconnectedTimeout = _disconnectTimeout ?? 5000;
+            DisconnectTimeout = _disconnectTimeout ?? 5000;
             UpdateTime = _updateTime ?? 15;
         }
 
@@ -123,7 +123,7 @@ namespace SquirrelayServer.Common
             UpdateTime = 15;
             NatPunchEnabled = false;
             PingInterval = 1000;
-            DisconnectedTimeout = 5000;
+            DisconnectTimeout = 5000;
 #if DEBUG
             DebugOnly = new DebugOnlyConfig
             {

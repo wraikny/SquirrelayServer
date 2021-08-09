@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -53,7 +53,7 @@ namespace SquirrelayServer.Server
                 NatPunchEnabled = config.NetConfig.NatPunchEnabled,
                 UpdateTime = config.NetConfig.UpdateTime,
                 PingInterval = config.NetConfig.PingInterval,
-                DisconnectTimeout = config.NetConfig.DisconnectedTimeout
+                DisconnectTimeout = config.NetConfig.DisconnectTimeout
             };
 
 #if DEBUG
