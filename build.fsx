@@ -96,6 +96,39 @@ Target.create "Build" (fun _ ->
     }))
 )
 
+Target.create "Publish" (fun _ ->
+  [
+    "linux-x64"
+    "win10-x64"
+  ]
+  |> Seq.iter (fun runtime ->
+    let dir = @$"output/SquirrelayServer.{runtime}"
+
+    @"src/SquirrelayServer.App/SquirrelayServer.App.csproj"
+    |> DotNet.publish (fun p ->
+      { p with
+          Runtime = Some runtime
+          Configuration = DotNet.BuildConfiguration.Release
+          SelfContained = Some true
+          OutputPath = Some dir
+          MSBuildParams = {
+            p.MSBuildParams with
+              Properties =
+                ("PublishSingleFile", "true")
+                :: ("PublishTrimmed", "true")
+                :: p.MSBuildParams.Properties
+          }
+      }
+    )
+
+    Directory.ensure $"{dir}/config"
+
+    @"config/config.json" |> Shell.copyFile @$"{dir}/config/config.json"
+
+    !! $"{dir}/**.pdb" |> Seq.iter Shell.rm
+  )
+)
+
 Target.create "PreCommit" (fun _ ->
   Target.runSimple "Format" [] |> ignore
   Target.runSimple "Build" [ "debug" ] |> ignore

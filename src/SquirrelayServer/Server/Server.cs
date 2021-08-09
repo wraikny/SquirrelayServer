@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -73,7 +73,8 @@ namespace SquirrelayServer.Server
 #endif
         }
 
-        public async ValueTask Start()
+        // Start the server.
+        public async Task Start()
         {
             if (IsRunning)
             {
@@ -104,8 +105,11 @@ namespace SquirrelayServer.Server
             }
         }
 
+        // Stop the server.
         public void Stop()
         {
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Server stop.");
+
             _manager.Stop(true);
 
             _clientIdNext = 0;
@@ -130,11 +134,21 @@ namespace SquirrelayServer.Server
             {
                 if (_server._manager.ConnectedPeersCount < _server._config.NetConfig.MaxClientsCount)
                 {
-                    request.AcceptIfKey(_server._config.NetConfig.ConnectionKey);
+                    if (request.AcceptIfKey(_server._config.NetConfig.ConnectionKey) is { })
+                    {
+                        NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Accepted connection request.");
+                    }
+                    else
+                    {
+                        NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Rejected connection request.");
+                    }
                 }
                 else
                 {
                     request.Reject();
+
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Rejected connection request because of the connected clients count.");
+
                 }
             }
 

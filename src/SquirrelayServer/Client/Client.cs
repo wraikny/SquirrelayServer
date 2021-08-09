@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -26,7 +26,7 @@ namespace SquirrelayServer.Client
         private readonly List<RelayedGameMessage> _gameMessages;
 
         private MessageHandler<IClientMsg, IServerMsg> _messageHandler;
-        private IClientListener<TPlayerStatus, TRoomMessage, TMsg> _listener;
+        private readonly IClientListener<TPlayerStatus, TRoomMessage, TMsg> _listener;
 
         public CurrentRoomInfo<TPlayerStatus, TRoomMessage> CurrentRoom { get; private set; }
 
@@ -42,7 +42,12 @@ namespace SquirrelayServer.Client
 
         public bool IsOwner => CurrentRoom?.OwnerId == Id;
 
-        public Client(NetConfig netConfig, MessagePackSerializerOptions serverSerializerOptions, MessagePackSerializerOptions clientsSerializerOptions)
+        public Client(
+            NetConfig netConfig,
+            MessagePackSerializerOptions serverSerializerOptions,
+            MessagePackSerializerOptions clientsSerializerOptions,
+            IClientListener<TPlayerStatus, TRoomMessage, TMsg> listener
+        )
         {
             _netConfig = netConfig;
             _serverSerializerOptions = serverSerializerOptions;
@@ -54,6 +59,8 @@ namespace SquirrelayServer.Client
             IsStarted = false;
 
             _updateContext = new Queue<Action>();
+
+            _listener = listener;
 
             _manager = new NetManager(new Listener(this))
             {
@@ -86,7 +93,7 @@ namespace SquirrelayServer.Client
         /// <param name="host"></param>
         /// <param name="listener"></param>
         /// <returns></returns>
-        public async Task Start(string host, IClientListener<TPlayerStatus, TRoomMessage, TMsg> listener)
+        public async Task Start(string host)
         {
             if (IsStarted)
             {
@@ -99,8 +106,6 @@ namespace SquirrelayServer.Client
 
             _manager.Start();
             _manager.Connect(host, _netConfig.Port, _netConfig.ConnectionKey);
-
-            _listener = listener;
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client is waiting to be connected.");
             while (_messageHandler is null)
@@ -130,8 +135,6 @@ namespace SquirrelayServer.Client
             _manager.Stop(true);
 
             _updateContext.Clear();
-
-            _listener = null;
 
             if (_messageHandler is { })
             {
@@ -480,18 +483,18 @@ namespace SquirrelayServer.Client
 
             void INetEventListener.OnPeerConnected(NetPeer peer)
             {
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Connected to the server.");
+
                 var sender = new NetPeerSender<IClientMsg>(peer, _client._serverSerializerOptions);
                 _client._messageHandler = new MessageHandler<IClientMsg, IServerMsg>(sender);
-
-                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Connected to the server.");
             }
 
             void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
             {
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Disconnected from server.");
+
                 _client.IsConnected = false;
                 _client.Stop();
-
-                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Disconnected from server.");
             }
 
             void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)

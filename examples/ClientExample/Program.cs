@@ -19,12 +19,19 @@ namespace ClientExample
         void INetLogger.WriteNet(NetLogLevel level, string str, params object[] args)
         {
             var msg = args.Length == 0 ? str : string.Format(str, args);
-            Console.WriteLine($"[Log] {msg}");
+            var current = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+            var output = $"[{current}] {msg}";
+
+            Console.WriteLine(output);
         }
     }
 
     public class Program
     {
+        private static int s_messageReceivedCount = 0;
+
+        private static GameMessage s_msg = new GameMessage { Message = "Hello, world!" };
+
         public static void Main(string[] args)
         {
             NetDebug.Logger = new Logger();
@@ -39,7 +46,16 @@ namespace ClientExample
 
             var options = Options.DefaultOptions;
 
-            var client = new Client<PlayerStatus, RoomMessage, GameMessage>(config.NetConfig, options, options);
+            var listener = new EventBasedClientLIstener<PlayerStatus, RoomMessage, GameMessage>();
+
+            listener.OnGameMessageReceived += (clientId, elapsedSeconds, message) => {
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Message received: '{message.Message}'");
+
+                s_messageReceivedCount++;
+                Assert.True(message.Message == s_msg.Message);
+            };
+
+            var client = new Client<PlayerStatus, RoomMessage, GameMessage>(config.NetConfig, options, options, listener);
 
             var task = Run(client);
 
@@ -55,20 +71,7 @@ namespace ClientExample
 
         private static async Task Run(Client<PlayerStatus, RoomMessage, GameMessage> client)
         {
-            var messageReceivedCount = 0;
-
-            var msg = new GameMessage { Message = "Hello, world!" };
-
-            var listener = new EventBasedClientLIstener<PlayerStatus, RoomMessage, GameMessage>();
-
-            listener.OnGameMessageReceived += (clientId, elapsedSeconds, message) => {
-                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Message received: '{message.Message}'");
-
-                messageReceivedCount++;
-                Assert.True(message.Message == msg.Message);
-            };
-
-            await client.Start("localhost", listener);
+            await client.Start("localhost");
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client started");
 
@@ -98,14 +101,14 @@ namespace ClientExample
 
             var gameStartRes = await client.RequestStartPlayingAsync();
 
-            var sendRes = await client.RequestSendGameMessage(msg);
+            var sendRes = await client.RequestSendGameMessage(s_msg);
 
             Assert.True(sendRes.IsSuccess);
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Send game message.");
 
-            await Task.Delay(2000);
+            await Task.Delay(1000);
 
-            Assert.True(messageReceivedCount == 1);
+            Assert.True(s_messageReceivedCount == 1);
 
             client.Stop();
         }

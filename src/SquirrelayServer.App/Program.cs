@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 
 using LiteNetLib;
@@ -11,30 +12,39 @@ namespace SquirrelayServer.App
 {
     internal sealed class Logger : INetLogger
     {
-        public Logger()
-        {
+        private readonly StreamWriter _stream;
 
+        public Logger(StreamWriter stream)
+        {
+            _stream = stream;
         }
 
         void INetLogger.WriteNet(NetLogLevel level, string str, params object[] args)
         {
             var msg = args.Length == 0 ? str : string.Format(str, args);
-            Console.WriteLine($"[Log] {msg}");
+            var current = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+            var output = $"[{current}] {msg}";
+
+            //_stream.WriteLine(output);
+            //_stream.Flush();
+
+            Console.WriteLine(output);
         }
     }
 
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static async Task Main(string[] _)
         {
+            using var fileStream = File.OpenWrite("log.txt");
+            using var streamWriter = new StreamWriter(fileStream);
+
             // Set Logger
-            NetDebug.Logger = new Logger();
+            NetDebug.Logger = new Logger(streamWriter);
 
             // Load config
-            var configPath = args.Length == 0 ? @"config/config.json" : args[0];
-            var config = await Config.LoadFromFileAsync(configPath);
-
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Config is loaded from '{0}'.", configPath);
+            var config = await Config.LoadFromFileAsync(@"config/config.json");
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Config is loaded.");
 
             // Start server
             var server = new Server.Server(config, Options.DefaultOptions);
