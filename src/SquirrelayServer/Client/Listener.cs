@@ -18,7 +18,7 @@ namespace SquirrelayServer.Client
         void OnGameMessageReceived(ulong clientId, float elapsedSeconds, TMsg message) { }
     }
 
-    public sealed class EventBasedClientLIstener<TPlayerStatus, TRoomMessage, TMsg> : IClientListener<TPlayerStatus, TRoomMessage, TMsg>
+    public sealed class EventBasedClientListener<TPlayerStatus, TRoomMessage, TMsg> : IClientListener<TPlayerStatus, TRoomMessage, TMsg>
         where TPlayerStatus : class
         where TRoomMessage : class
     {

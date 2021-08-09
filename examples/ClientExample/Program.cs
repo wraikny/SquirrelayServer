@@ -46,7 +46,7 @@ namespace ClientExample
 
             var options = Options.DefaultOptions;
 
-            var listener = new EventBasedClientLIstener<PlayerStatus, RoomMessage, GameMessage>();
+            var listener = new EventBasedClientListener<PlayerStatus, RoomMessage, GameMessage>();
 
             listener.OnGameMessageReceived += (clientId, elapsedSeconds, message) => {
                 NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Message received: '{message.Message}'");
