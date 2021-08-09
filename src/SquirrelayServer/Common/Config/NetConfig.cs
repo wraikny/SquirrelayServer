@@ -15,7 +15,7 @@ namespace SquirrelayServer.Common
         [DataMember(Name = "port")]
         public int Port { get; set; }
 
-        [DataMember(Name = "mexClientsCount")]
+        [DataMember(Name = "maxClientsCount")]
         public int MaxClientsCount { get; set; }
 
 #pragma warning disable 0649
