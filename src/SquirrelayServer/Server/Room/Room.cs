@@ -74,6 +74,8 @@ namespace SquirrelayServer.Server
         }
         private void Broadcast(IServerMsg msg)
         {
+            if (_clients.Count > 0) return;
+
             var data = MessagePackSerializer.Serialize(msg, _serializerOptions);
 
             foreach (var client in _clients)
@@ -91,9 +93,8 @@ namespace SquirrelayServer.Server
 
         public void Update()
         {
-
             // When playerstatuses is updated or roomstatus is updated
-            if (_updatedPlayersStatuses.Count > 0 || _updatedRoomStatus)
+            if (_clients.Count > 0 && (_updatedPlayersStatuses.Count > 0 || _updatedRoomStatus))
             {
                 foreach (var x in _updatedPlayersStatuses)
                 {
