@@ -129,7 +129,9 @@ namespace SquirrelayServer.Tests
 
             var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), options);
 
-            roomList.OperateRoom(clientMock0.Object, IClientMsg.OperateRoom.StartPlaying);
+            var startRes = roomList.OperateRoom(clientMock0.Object, IClientMsg.OperateRoom.StartPlaying);
+
+            Assert.True(startRes.IsSuccess);
 
             var msg0 = new IClientMsg.SendGameMessage(new byte[] { 0, 1, 2, 3, 4, 5 });
             roomList.ReceiveGameMessage(clientMock0.Object, msg0);
@@ -143,14 +145,11 @@ namespace SquirrelayServer.Tests
             {
                 if (message is IServerMsg.BroadcastGameMessages msg)
                 {
+                    Assert.Equal(2, msg.Messages.Count);
                     Assert.Equal(msg.Messages[0].ClientId, clientMock0.Object.Id);
                     Assert.True(Enumerable.SequenceEqual(msg.Messages[0].Data, msg0.Data));
                     Assert.True(Enumerable.SequenceEqual(msg.Messages[1].Data, msg1.Data));
                     handlerCheckPassedCount++;
-                }
-                else
-                {
-
                 }
             }
 
@@ -166,11 +165,6 @@ namespace SquirrelayServer.Tests
                     var msg = MessagePackSerializer.Deserialize<IServerMsg>(data, options);
                     Send(msg, channelNumber, deliveryMethod);
                 });
-
-            var handlers = new Dictionary<ulong, Server.IClientHandler>
-            {
-                { clientMock0.Object.Id, clientMock0.Object }
-            };
 
             roomList.Update();
 

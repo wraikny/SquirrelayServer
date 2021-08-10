@@ -74,7 +74,7 @@ namespace SquirrelayServer.Server
         }
         private void Broadcast(IServerMsg msg)
         {
-            if (_clients.Count > 0) return;
+            if (_clients.Count == 0) return;
 
             var data = MessagePackSerializer.Serialize(msg, _serializerOptions);
 
