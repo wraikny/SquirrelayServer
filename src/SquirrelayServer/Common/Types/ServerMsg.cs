@@ -191,6 +191,7 @@ namespace SquirrelayServer.Common
                 PlayerOutOfRoom = 1,
                 PlayerIsNotOwner = 2,
                 InvalidRoomStatus = 3,
+                NotEnoughPeople = 4,
             }
 
             [Key(0)]
@@ -209,7 +210,7 @@ namespace SquirrelayServer.Common
             internal static readonly OperateRoomResponse PlayerIsNotOwner = new OperateRoomResponse(ResultKind.PlayerIsNotOwner);
             internal static readonly OperateRoomResponse PlayerOutOfRoom = new OperateRoomResponse(ResultKind.PlayerOutOfRoom);
             internal static readonly OperateRoomResponse InvalidRoomStatus = new OperateRoomResponse(ResultKind.InvalidRoomStatus);
-
+            internal static readonly OperateRoomResponse NotEnoughPeople = new OperateRoomResponse(ResultKind.NotEnoughPeople);
         }
 
         [MessagePackObject]

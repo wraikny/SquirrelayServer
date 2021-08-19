@@ -248,6 +248,7 @@ SquireelayServerは、RUDP（LiteNetLib）とMessagePackを使った、リアル
     * `PlayerOutOfRoom`: ルームに入室していない
     * `PlayerIsNotOwner`: ルームオーナーではない
     * `InvalidRoomStatus`: 現在のルームステータスでは実行不可能
+    * `NotEnoughPeople`: ルームの人数が最低人数未満
 * `SetPlayerStatusResponse`
   * `Result`
     * `Success`: 成功

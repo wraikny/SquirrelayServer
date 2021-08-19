@@ -23,7 +23,7 @@ namespace SquirrelayServer.Tests
             EnterWhenPlayingAllowed = true,
             DisposeSecondsWhenNoMember = 120,
             UpdatingDisposeStatusIntervalSeconds = 10.0f,
-            NumberOfPlayersRange = (2, 6),
+            NumberOfPlayersRange = (1, 6),
             GeneratedRoomIdRange = (1000, 9999),
         };
 
@@ -66,12 +66,12 @@ namespace SquirrelayServer.Tests
             var (roomList, _, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), Options.DefaultOptions);
             var info = roomList.GetRoomInfoList();
 
-            var clientMock0 = CreateClientHandlerMock(1);
+            var clientMock1 = CreateClientHandlerMock(1);
 
             var enterRoom = new IClientMsg.EnterRoom(roomId, null, null);
 
-            roomList.EnterRoom(clientMock0.Object, enterRoom);
-            Assert.Equal(clientMock0.Object.RoomId, roomId);
+            roomList.EnterRoom(clientMock1.Object, enterRoom);
+            Assert.Equal(clientMock1.Object.RoomId, roomId);
             Assert.Equal(2, info.Info.First().NumberOfPlayers);
         }
 
@@ -108,11 +108,25 @@ namespace SquirrelayServer.Tests
         [Fact]
         public void OperateRoom()
         {
-            var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), Options.DefaultOptions);
+            var roomConfig = GetRoomConfig();
+            roomConfig.NumberOfPlayersRange = (2, 6);
+            var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(roomConfig, Options.DefaultOptions);
 
-            var startPlaying = IClientMsg.OperateRoom.StartPlaying;
-            var startPlayingRes = roomList.OperateRoom(clientMock0.Object, startPlaying);
-            Assert.True(startPlayingRes.IsSuccess);
+            {
+                var startPlaying = IClientMsg.OperateRoom.StartPlaying;
+                var startPlayingRes = roomList.OperateRoom(clientMock0.Object, startPlaying);
+                Assert.Equal(IServerMsg.OperateRoomResponse.ResultKind.NotEnoughPeople, startPlayingRes.Result);
+            }
+
+            var clientMock1 = CreateClientHandlerMock(1);
+            var enterRoom = new IClientMsg.EnterRoom(roomId, null, null);
+            roomList.EnterRoom(clientMock1.Object, enterRoom);
+
+            {
+                var startPlaying = IClientMsg.OperateRoom.StartPlaying;
+                var startPlayingRes = roomList.OperateRoom(clientMock0.Object, startPlaying);
+                Assert.True(startPlayingRes.IsSuccess);
+            }
 
             var room = roomList.Rooms[roomId];
             Assert.Equal(RoomStatus.Playing, room.RoomStatus);

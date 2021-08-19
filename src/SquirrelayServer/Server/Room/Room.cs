@@ -253,6 +253,11 @@ namespace SquirrelayServer.Server
                             return IServerMsg.OperateRoomResponse.InvalidRoomStatus;
                         }
 
+                        if (_clients.Count < _roomConfig.NumberOfPlayersRange.Item1)
+                        {
+                            return IServerMsg.OperateRoomResponse.NotEnoughPeople;
+                        }
+
                         StartPlaying();
 
                         break;
