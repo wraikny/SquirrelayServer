@@ -311,12 +311,12 @@ namespace SquirrelayServer.Common
         public sealed class Tick : IServerMsg
         {
             [Key(0)]
-            public float ElapsedSecond { get; private set; }
+            public float ElapsedSeconds { get; private set; }
 
             [SerializationConstructor]
-            public Tick(float elapsedSecond)
+            public Tick(float elapsedSeconds)
             {
-                ElapsedSecond = elapsedSecond;
+                ElapsedSeconds = elapsedSeconds;
             }
         }
 

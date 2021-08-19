@@ -15,8 +15,8 @@ namespace SquirrelayServer.Client
         void OnPlayerExited(ulong id) { }
         void OnPlayerStatusUpdated(ulong id, TPlayerStatus status) { }
         void OnRoomMessageUpdated(TRoomMessage roomMessage) { }
-        void OnGameMessageReceived(ulong clientId, float elapsedSecond, TMsg message) { }
-        void OnTicked(float elapsedSecond) { }
+        void OnGameMessageReceived(ulong clientId, float elapsedSeconds, TMsg message) { }
+        void OnTicked(float elapsedSeconds) { }
     }
 
     public sealed class EventBasedClientListener<TPlayerStatus, TRoomMessage, TMsg> : IClientListener<TPlayerStatus, TRoomMessage, TMsg>
@@ -41,7 +41,7 @@ namespace SquirrelayServer.Client
         void IClientListener<TPlayerStatus, TRoomMessage, TMsg>.OnPlayerExited(ulong id) => OnPlayerExited?.Invoke(id);
         void IClientListener<TPlayerStatus, TRoomMessage, TMsg>.OnPlayerStatusUpdated(ulong id, TPlayerStatus status) => OnPlayerStatusUpdated?.Invoke(id, status);
         void IClientListener<TPlayerStatus, TRoomMessage, TMsg>.OnRoomMessageUpdated(TRoomMessage roomMessage) => OnRoomMessageUpdated?.Invoke(roomMessage);
-        void IClientListener<TPlayerStatus, TRoomMessage, TMsg>.OnGameMessageReceived(ulong clientId, float elapsedSecond, TMsg message) => OnGameMessageReceived?.Invoke(clientId, elapsedSecond, message);
-        void IClientListener<TPlayerStatus, TRoomMessage, TMsg>.OnTicked(float elapsedSecond) => OnTicked?.Invoke(elapsedSecond);
+        void IClientListener<TPlayerStatus, TRoomMessage, TMsg>.OnGameMessageReceived(ulong clientId, float elapsedSeconds, TMsg message) => OnGameMessageReceived?.Invoke(clientId, elapsedSeconds, message);
+        void IClientListener<TPlayerStatus, TRoomMessage, TMsg>.OnTicked(float elapsedSeconds) => OnTicked?.Invoke(elapsedSeconds);
     }
 }

@@ -32,7 +32,7 @@ namespace SquirrelayServer.Common
         public ulong ClientId { get; private set; }
 
         [Key(1)]
-        public float ElapsedSecond { get; private set; }
+        public float ElapsedSeconds { get; private set; }
 
         [Key(2)]
         public byte[] Data { get; private set; }
@@ -44,20 +44,20 @@ namespace SquirrelayServer.Common
             var other = (RelayedGameMessage)obj;
 
             return (ClientId == other.ClientId)
-                && (ElapsedSecond == other.ElapsedSecond)
+                && (ElapsedSeconds == other.ElapsedSeconds)
                 && Utils.GetStructualEquatable(Data, other.Data);
 
         }
         public override int GetHashCode()
         {
-            return HashCode.Combine(ClientId, ElapsedSecond, Data);
+            return HashCode.Combine(ClientId, ElapsedSeconds, Data);
         }
 
         [SerializationConstructor]
-        public RelayedGameMessage(ulong clientId, float elapsedSecond, byte[] data)
+        public RelayedGameMessage(ulong clientId, float elapsedSeconds, byte[] data)
         {
             ClientId = clientId;
-            ElapsedSecond = elapsedSecond;
+            ElapsedSeconds = elapsedSeconds;
             Data = data;
         }
     }

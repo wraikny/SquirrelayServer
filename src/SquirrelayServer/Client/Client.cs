@@ -189,7 +189,7 @@ namespace SquirrelayServer.Client
 
                     try
                     {
-                        _listener.OnGameMessageReceived(m.ClientId, m.ElapsedSecond, message);
+                        _listener.OnGameMessageReceived(m.ClientId, m.ElapsedSeconds, message);
                     }
                     catch (Exception e)
                     {
@@ -552,7 +552,7 @@ namespace SquirrelayServer.Client
                         }
                     case IServerMsg.Tick m:
                         {
-                            _client._updateContext.Enqueue(() => _client._listener.OnTicked(m.ElapsedSecond));
+                            _client._updateContext.Enqueue(() => _client._listener.OnTicked(m.ElapsedSeconds));
                             break;
                         }
                     default:
