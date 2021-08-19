@@ -292,21 +292,23 @@ namespace SquirrelayServer.Client
         /// <param name="password"></param>
         /// <param name="playerStatus"></param>
         /// <returns></returns>
-        public async Task<IServerMsg.EnterRoomResponse> RequestEnterRoomAsync(int roomId, string password = null, TPlayerStatus playerStatus = null)
+        public async Task<IServerMsg.EnterRoomResponse<TRoomMessage>> RequestEnterRoomAsync(int roomId, string password = null, TPlayerStatus playerStatus = null)
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
             var playerStatusData = playerStatus is null ? null : MessagePackSerializer.Serialize(playerStatus, _clientsSerializerOptions);
 
             _messageHandler.Send(new IClientMsg.EnterRoom(roomId, RoomConfig.PasswordEnabled ? password : null, playerStatusData));
-            var res = await _messageHandler.WaitMsgOfType<IServerMsg.EnterRoomResponse>();
+            var res = await _messageHandler.WaitMsgOfType<IServerMsg.EnterRoomResponse<byte[]>>();
 
             if (res.IsSuccess)
             {
                 CurrentRoom = CreateCurrentRoomInfo(roomId, res.OwnerId, res.Statuses, res.RoomMessage);
+                var response = new IServerMsg.EnterRoomResponse<TRoomMessage>(res.Result, res.OwnerId, res.Statuses, CurrentRoom.RoomMessage);
+                return response;
             }
 
-            return res;
+            return new IServerMsg.EnterRoomResponse<TRoomMessage>(res.Result);
         }
 
         /// <summary>

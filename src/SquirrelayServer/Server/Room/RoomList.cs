@@ -144,7 +144,7 @@ namespace SquirrelayServer.Server
             return IServerMsg.CreateRoomResponse.Success(roomId);
         }
 
-        public IServerMsg.EnterRoomResponse EnterRoom(IClientHandler client, IClientMsg.EnterRoom msg)
+        public IServerMsg.EnterRoomResponse<byte[]> EnterRoom(IClientHandler client, IClientMsg.EnterRoom msg)
         {
             if (client.RoomId is { }) return IServerMsg.EnterRoomResponse.AlreadyEntered;
             if (!_rooms.TryGetValue(msg.RoomId, out var room)) return IServerMsg.EnterRoomResponse.RoomNotFound;

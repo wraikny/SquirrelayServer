@@ -153,7 +153,7 @@ namespace SquirrelayServer.Server
             UpdatePlayerStatus(client.Id, new RoomPlayerStatus { Data = status });
         }
 
-        public IServerMsg.EnterRoomResponse EnterRoom(IClientHandler client, string password, byte[] status)
+        public IServerMsg.EnterRoomResponse<byte[]> EnterRoom(IClientHandler client, string password, byte[] status)
         {
             if (Password is string p && p != password) return IServerMsg.EnterRoomResponse.InvalidPassword;
             if (Info.MaxNumberOfPlayers == _clients.Count) return IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation;

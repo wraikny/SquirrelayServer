@@ -25,6 +25,7 @@ namespace SquirrelayServer.Tests
         {
             var memory = new ReadOnlyMemory<byte>(MessagePackSerializer.Serialize<U>(value, Options.DefaultOptions));
             var obj = (T)MessagePackSerializer.Deserialize<U>(memory, Options.DefaultOptions);
+            Assert.NotNull(obj);
 
             Utils.CheckEquality(value, obj);
         }
@@ -61,11 +62,11 @@ namespace SquirrelayServer.Tests
         [Fact]
         public void ServerMsg_EnterRoomResponse()
         {
-            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.RoomNotFound);
-            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.InvalidPassword);
-            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation);
-            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.AlreadyEntered);
-            Check<IServerMsg.EnterRoomResponse, IServerMsg>(IServerMsg.EnterRoomResponse.Success(0, null, new byte[1]));
+            Check<IServerMsg.EnterRoomResponse<byte[]>, IServerMsg>(IServerMsg.EnterRoomResponse.RoomNotFound);
+            Check<IServerMsg.EnterRoomResponse<byte[]>, IServerMsg>(IServerMsg.EnterRoomResponse.InvalidPassword);
+            Check<IServerMsg.EnterRoomResponse<byte[]>, IServerMsg>(IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation);
+            Check<IServerMsg.EnterRoomResponse<byte[]>, IServerMsg>(IServerMsg.EnterRoomResponse.AlreadyEntered);
+            Check<IServerMsg.EnterRoomResponse<byte[]>, IServerMsg>(IServerMsg.EnterRoomResponse.Success(0, null, new byte[1]));
         }
 
         [Fact]

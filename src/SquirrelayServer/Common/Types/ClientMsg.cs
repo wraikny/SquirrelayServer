@@ -63,7 +63,7 @@ namespace SquirrelayServer.Common
         }
 
         [MessagePackObject]
-        public sealed class EnterRoom : IClientMsg, IWithResponse<IServerMsg.EnterRoomResponse>
+        public sealed class EnterRoom : IClientMsg, IWithResponse<IServerMsg.EnterRoomResponse<byte[]>>
         {
             [Key(0)]
             public int RoomId { get; private set; }
