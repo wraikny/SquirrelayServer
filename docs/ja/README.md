@@ -25,8 +25,7 @@ SquireelayServerは、RUDP（LiteNetLib）とMessagePackを使った、リアル
 
 * ルーム機能と、ルーム内でのメッセージブロードキャストを提供
 * サーバー側のプログラム不要（組み込むことも可能）で、設定ファイルの記述のみ
-* クライアント側はメッセージを表す型をいくつか定義するだけで利用可能
-* `GameMessage`
+* クライアント側は、送受信されるメッセージを表す型をいくつか定義するだけで利用可能
 * async/await対応
 
 
@@ -226,8 +225,8 @@ SquireelayServerは、RUDP（LiteNetLib）とMessagePackを使った、リアル
 * `CreateRoomResponse`
   * `int Id`: 作成したルームのID
   * `Result`
-    * `Success`
-    * `AlreadyEntered`
+    * `Success`: 成功
+    * `AlreadyEntered`: すでにルームに入室済み
 * `EnterRoomResponse<TRoomMessage>`
   * `ulong? OwnerId`: ルームオーナーのID
   * `IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses`: 各プレイヤーのステータス
