@@ -117,11 +117,20 @@ namespace SquirrelayServer.Server
             }
 
             // When playing the game
-            if (RoomStatus == RoomStatus.Playing && _temporalGameMessagesBuffer.Count > 0)
+            if (RoomStatus == RoomStatus.Playing)
             {
-                var msg = new IServerMsg.BroadcastGameMessages(_temporalGameMessagesBuffer);
-                Broadcast(msg);
-                _temporalGameMessagesBuffer.Clear();
+                if (_temporalGameMessagesBuffer.Count > 0)
+                {
+                    var msg = new IServerMsg.BroadcastGameMessages(_temporalGameMessagesBuffer);
+                    Broadcast(msg);
+                    _temporalGameMessagesBuffer.Clear();
+                }
+
+                if (_roomConfig.TickMessageEnabled)
+                {
+                    var gameTime = Utils.MsToSec((int)_gameStopWatch.ElapsedMilliseconds);
+                    Broadcast(new IServerMsg.Tick(gameTime));
+                }
             }
         }
 

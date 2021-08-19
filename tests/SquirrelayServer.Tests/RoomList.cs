@@ -127,7 +127,10 @@ namespace SquirrelayServer.Tests
         {
             var options = Options.DefaultOptions;
 
-            var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), options);
+            var roomConfig = GetRoomConfig();
+            roomConfig.TickMessageEnabled = true;
+
+            var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(roomConfig, options);
 
             var startRes = roomList.OperateRoom(clientMock0.Object, IClientMsg.OperateRoom.StartPlaying);
 
@@ -140,16 +143,21 @@ namespace SquirrelayServer.Tests
             roomList.ReceiveGameMessage(clientMock0.Object, msg1);
 
             var handlerCheckPassedCount = 0;
+            var ticked = false;
 
             void Send(IServerMsg message, byte channelNumber, LiteNetLib.DeliveryMethod deliveryMethod)
             {
-                if (message is IServerMsg.BroadcastGameMessages msg)
+                if (message is IServerMsg.BroadcastGameMessages broadcast)
                 {
-                    Assert.Equal(2, msg.Messages.Count);
-                    Assert.Equal(msg.Messages[0].ClientId, clientMock0.Object.Id);
-                    Assert.True(Enumerable.SequenceEqual(msg.Messages[0].Data, msg0.Data));
-                    Assert.True(Enumerable.SequenceEqual(msg.Messages[1].Data, msg1.Data));
+                    Assert.Equal(2, broadcast.Messages.Count);
+                    Assert.Equal(broadcast.Messages[0].ClientId, clientMock0.Object.Id);
+                    Assert.True(Enumerable.SequenceEqual(broadcast.Messages[0].Data, msg0.Data));
+                    Assert.True(Enumerable.SequenceEqual(broadcast.Messages[1].Data, msg1.Data));
                     handlerCheckPassedCount++;
+                }
+                else if (message is IServerMsg.Tick)
+                {
+                    ticked = true;
                 }
             }
 
@@ -169,6 +177,7 @@ namespace SquirrelayServer.Tests
             roomList.Update();
 
             Assert.Equal(1, handlerCheckPassedCount);
+            Assert.True(ticked);
         }
     }
 }

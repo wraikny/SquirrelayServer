@@ -550,6 +550,11 @@ namespace SquirrelayServer.Client
                             }
                             break;
                         }
+                    case IServerMsg.Tick m:
+                        {
+                            _client._updateContext.Enqueue(() => _client._listener.OnTicked(m.ElapsedSecond));
+                            break;
+                        }
                     default:
                         {
                             _client._messageHandler.Receive(msg);

@@ -31,18 +31,22 @@ namespace SquirrelayServer.Common
         [Key(3)]
         public bool EnterWhenPlayingAllowed { get; set; }
 
-        [DataMember(Name = "disposeSecondsWhenNoMember")]
+        [DataMember(Name = "tickMessageEnabled")]
         [Key(4)]
+        public bool TickMessageEnabled { get; set; }
+
+        [DataMember(Name = "disposeSecondsWhenNoMember")]
+        [Key(5)]
         public float DisposeSecondsWhenNoMember { get; set; }
 
         [DataMember(Name = "updatingDisposeStatusIntervalSeconds")]
-        [Key(5)]
+        [Key(6)]
         public float UpdatingDisposeStatusIntervalSeconds { get; set; }
 
 #pragma warning disable 0649
 
         [DataMember(Name = "numberOfPlayersRange")]
-        [Key(6)]
+        [Key(7)]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public int[] _numberOfPlayersRange;
 
@@ -59,7 +63,7 @@ namespace SquirrelayServer.Common
         }
 
         [DataMember(Name = "generatedRoomIdRange")]
-        [Key(7)]
+        [Key(8)]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public int[] _generatedRoomIdRange;
 
@@ -107,6 +111,7 @@ namespace SquirrelayServer.Common
                 && (RoomMessageEnabled == other.RoomMessageEnabled)
                 && (PasswordEnabled == other.PasswordEnabled)
                 && (EnterWhenPlayingAllowed == other.EnterWhenPlayingAllowed)
+                && (TickMessageEnabled == other.TickMessageEnabled)
                 && (DisposeSecondsWhenNoMember == other.DisposeSecondsWhenNoMember)
                 && (UpdatingDisposeStatusIntervalSeconds == other.UpdatingDisposeStatusIntervalSeconds)
                 && (NumberOfPlayersRange == other.NumberOfPlayersRange)
@@ -115,16 +120,17 @@ namespace SquirrelayServer.Common
         }
         public override int GetHashCode()
         {
-            return HashCode.Combine(
-                InvisibleEnabled,
-                RoomMessageEnabled,
-                PasswordEnabled,
-                EnterWhenPlayingAllowed,
-                DisposeSecondsWhenNoMember,
-                UpdatingDisposeStatusIntervalSeconds,
-                NumberOfPlayersRange,
-                GeneratedRoomIdRange
-            );
+            var hash = new HashCode();
+            hash.Add(InvisibleEnabled);
+            hash.Add(RoomMessageEnabled);
+            hash.Add(PasswordEnabled);
+            hash.Add(EnterWhenPlayingAllowed);
+            hash.Add(TickMessageEnabled);
+            hash.Add(DisposeSecondsWhenNoMember);
+            hash.Add(UpdatingDisposeStatusIntervalSeconds);
+            hash.Add(NumberOfPlayersRange);
+            hash.Add(GeneratedRoomIdRange);
+            return hash.ToHashCode();
         }
     }
 }

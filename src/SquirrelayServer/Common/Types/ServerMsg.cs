@@ -19,8 +19,9 @@ namespace SquirrelayServer.Common
     [Union(8, typeof(SetRoomMessageResponse))]
     [Union(9, typeof(SendGameMessageResponse))]
     [Union(10, typeof(UpdateRoomPlayersAndMessage))]
-    [Union(11, typeof(BroadcastGameMessages))]
-    [Union(12, typeof(NotifyRoomOperation))]
+    [Union(11, typeof(Tick))]
+    [Union(12, typeof(BroadcastGameMessages))]
+    [Union(13, typeof(NotifyRoomOperation))]
     public interface IServerMsg
     {
         [MessagePackObject]
@@ -303,6 +304,19 @@ namespace SquirrelayServer.Common
                 Owner = owner;
                 Statuses = statuses;
                 RoomStatus = roomStatus;
+            }
+        }
+
+        [MessagePackObject]
+        public sealed class Tick : IServerMsg
+        {
+            [Key(0)]
+            public float ElapsedSecond { get; private set; }
+
+            [SerializationConstructor]
+            public Tick(float elapsedSecond)
+            {
+                ElapsedSecond = elapsedSecond;
             }
         }
 

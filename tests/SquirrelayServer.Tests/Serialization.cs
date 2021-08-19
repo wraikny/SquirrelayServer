@@ -134,7 +134,16 @@ namespace SquirrelayServer.Tests
         }
 
         [Fact]
-        public void ServerMsg_DistributeGameMessage()
+        public void ServerMsg_Tick()
+        {
+            Check<IServerMsg.Tick, IServerMsg>(new IServerMsg.Tick(0.0f));
+            Check<IServerMsg.Tick, IServerMsg>(new IServerMsg.Tick(1.0f));
+            Check<IServerMsg.Tick, IServerMsg>(new IServerMsg.Tick(-1.0f));
+            Check<IServerMsg.Tick, IServerMsg>(new IServerMsg.Tick(12.34f));
+        }
+
+        [Fact]
+        public void ServerMsg_BroadcastGameMessage()
         {
             {
                 var msgs = new List<RelayedGameMessage>();
