@@ -212,7 +212,7 @@ namespace SquirrelayServer.Client
         }
 
         /// <summary>
-        /// Request to retrieve the number of clients currently connected to the server.
+        /// Request to get the number of clients currently connected to the server.
         /// </summary>
         /// <returns></returns>
         public async Task<int> RequestGetClientsCountAsync()
@@ -225,7 +225,7 @@ namespace SquirrelayServer.Client
         }
 
         /// <summary>
-        /// Request to retrieve a list of rooms. Rooms that are set to invisible cannot be retrieved.
+        /// Request to get a list of rooms. Rooms that are set to invisible cannot be gotten.
         /// </summary>
         /// <returns></returns>
         public async Task<IReadOnlyCollection<RoomInfo<TRoomMessage>>> RequestGetRoomListAsync()
@@ -378,7 +378,7 @@ namespace SquirrelayServer.Client
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        public Task<IServerMsg.SendGameMessageResponse> RequestSendGameMessage(TMsg message)
+        public Task<IServerMsg.SendGameMessageResponse> SendGameMessageAsync(TMsg message)
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 

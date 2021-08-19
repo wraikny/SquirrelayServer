@@ -101,7 +101,7 @@ namespace ClientExample
 
             var gameStartRes = await client.RequestStartPlayingAsync();
 
-            var sendRes = await client.RequestSendGameMessage(s_msg);
+            var sendRes = await client.SendGameMessageAsync(s_msg);
 
             Assert.True(sendRes.IsSuccess);
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Send game message.");
