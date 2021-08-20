@@ -34,17 +34,19 @@ namespace SquirrelayServer.App
 
     public class Program
     {
-        public static async Task Main(string[] _)
+        private const string DefaultConfigPath = @"config/config.json";
+        public static async Task Main(string[] args)
         {
             using var fileStream = File.OpenWrite("log.txt");
             using var streamWriter = new StreamWriter(fileStream);
 
             // Set Logger
             NetDebug.Logger = new Logger(streamWriter);
-
+            
             // Load config
-            var config = await Config.LoadFromFileAsync(@"config/config.json");
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Config is loaded.");
+            var path = args.Length > 0 && File.Exists(args[0]) ? args[0] : DefaultConfigPath;
+            var config = await Config.LoadFromFileAsync(path);
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Config is loaded from '{path}'.");
 
             // Start server
             var server = new Server.Server(config, Options.DefaultOptions);
