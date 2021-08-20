@@ -42,7 +42,7 @@ namespace SquirrelayServer.App
 
             // Set Logger
             NetDebug.Logger = new Logger(streamWriter);
-            
+
             // Load config
             var path = args.Length > 0 && File.Exists(args[0]) ? args[0] : DefaultConfigPath;
             var config = await Config.LoadFromFileAsync(path);
