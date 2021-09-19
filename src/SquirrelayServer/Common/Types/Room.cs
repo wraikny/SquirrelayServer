@@ -36,7 +36,7 @@ namespace SquirrelayServer.Common
 
     public class RoomInfo<T>
     {
-        public bool Id { get; set; }
+        public int Id { get; set; }
         public bool IsVisible { get; set; }
         public int MaxNumberOfPlayers { get; set; }
 
@@ -48,7 +48,7 @@ namespace SquirrelayServer.Common
 
         public RoomInfo(RoomInfo roomInfo, T message)
         {
-            Id = Id;
+            Id = roomInfo.Id;
             IsVisible = roomInfo.IsVisible;
             MaxNumberOfPlayers = roomInfo.MaxNumberOfPlayers;
             NumberOfPlayers = roomInfo.NumberOfPlayers;
