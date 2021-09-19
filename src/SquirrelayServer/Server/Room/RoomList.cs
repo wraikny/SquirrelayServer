@@ -122,6 +122,7 @@ namespace SquirrelayServer.Server
 
             var roomInfo = new RoomInfo
             {
+                Id = roomId,
                 IsVisible = _roomConfig.InvisibleEnabled ? msg.IsVisible : true,
                 MaxNumberOfPlayers = Utils.Clamp(msg.MaxNumberOfPlayers, maxRange.Item1, maxRange.Item2),
                 NumberOfPlayers = 0,
