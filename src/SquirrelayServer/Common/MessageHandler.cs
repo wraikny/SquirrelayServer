@@ -25,13 +25,18 @@ namespace SquirrelayServer.Common
 
         private readonly List<Receiver> _receivers;
 
-        private readonly ISender<TSend> _sender;
+        private ISender<TSend> _sender;
 
         public ulong? Id { get; set; }
 
-        public MessageHandler(ISender<TSend> sender)
+        public MessageHandler()
         {
             _receivers = new List<Receiver>();
+        }
+
+        public bool SenderIsNull => _sender is null;
+        public void SetSender(ISender<TSend> sender)
+        {
             _sender = sender;
         }
 

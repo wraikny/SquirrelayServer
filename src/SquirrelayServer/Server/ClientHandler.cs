@@ -53,10 +53,11 @@ namespace SquirrelayServer.Server
         public ClientHandler(ulong id, NetPeerSender<IServerMsg> sender)
         {
             //var subject = Subject.Synchronize(new Subject<IClientMsg>());
-            _handler = new MessageHandler<IServerMsg, IClientMsg>(sender)
+            _handler = new MessageHandler<IServerMsg, IClientMsg>()
             {
                 Id = id,
             };
+            _handler.SetSender(sender);
         }
 
         //public void Receive(IClientMsg msg)

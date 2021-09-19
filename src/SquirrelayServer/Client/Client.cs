@@ -60,6 +60,8 @@ namespace SquirrelayServer.Client
 
             _updateContext = new Queue<Action>();
 
+            _messageHandler = new MessageHandler<IClientMsg, IServerMsg>();
+
             _listener = listener;
 
             _manager = new NetManager(new Listener(this))
@@ -105,12 +107,15 @@ namespace SquirrelayServer.Client
 
 
             _manager.Start();
+
             _manager.Connect(host, _netConfig.Port, _netConfig.ConnectionKey);
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client is waiting to be connected.");
-            while (_messageHandler is null)
+
+            var waitHello = _messageHandler.WaitMsgOfType<IServerMsg.Hello>();
+            while (_messageHandler.SenderIsNull)
             {
-                await Task.Delay(_netConfig.UpdateTime);
+                await Task.Yield();
 
                 if (!IsStarted)
                 {
@@ -118,7 +123,7 @@ namespace SquirrelayServer.Client
                 }
             }
 
-            var hello = await _messageHandler.WaitMsgOfType<IServerMsg.Hello>();
+            var hello = await waitHello;
             Id = hello.Id;
             RoomConfig = hello.RoomConfig;
 
@@ -139,11 +144,8 @@ namespace SquirrelayServer.Client
 
             _updateContext.Clear();
 
-            if (_messageHandler is { })
-            {
-                _messageHandler.Cancel();
-                _messageHandler = null;
-            }
+            _messageHandler.Cancel();
+            _messageHandler.SetSender(null);
 
             _gameMessages.Clear();
 
@@ -231,7 +233,7 @@ namespace SquirrelayServer.Client
         public async Task<IReadOnlyCollection<RoomInfo<TRoomMessage>>> RequestGetRoomListAsync()
         {
             if (!IsConnected) throw new ClientNotConnectedException();
-
+            
             _messageHandler.Send(IClientMsg.GetRoomList.Instance);
             var res = await _messageHandler.WaitMsgOfType<IServerMsg.RoomListResponse>();
 
@@ -272,7 +274,6 @@ namespace SquirrelayServer.Client
             var maxNum = maxNumberOfPlayers ?? RoomConfig.NumberOfPlayersRange.Item2;
             var playerStatusData = playerStatus is null ? null : MessagePackSerializer.Serialize(playerStatus, _clientsSerializerOptions);
             var roomMessageData = RoomConfig.RoomMessageEnabled ? MessagePackSerializer.Serialize(roomMessage, _clientsSerializerOptions) : null;
-
 
             _messageHandler.Send(new IClientMsg.CreateRoom(isVisible, password, maxNum, playerStatusData, roomMessageData));
             var res = await _messageHandler.WaitMsgOfType<IServerMsg.CreateRoomResponse>();
@@ -492,7 +493,7 @@ namespace SquirrelayServer.Client
                 NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Connected to the server.");
 
                 var sender = new NetPeerSender<IClientMsg>(peer, _client._serverSerializerOptions);
-                _client._messageHandler = new MessageHandler<IClientMsg, IServerMsg>(sender);
+                _client._messageHandler.SetSender(sender);
             }
 
             void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
