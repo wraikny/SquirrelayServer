@@ -39,7 +39,9 @@ namespace SquirrelayServer.Tests
                     Assert.Equal(message.Message, deserialized.Message);
                 });
 
-            var handler = new MessageHandler<Msg, Msg>(sender.Object);
+            var handler = new MessageHandler<Msg, Msg>();
+            handler.SetSender(sender.Object);
+
             return handler;
         }
 
