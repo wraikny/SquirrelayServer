@@ -233,7 +233,7 @@ namespace SquirrelayServer.Client
         public async Task<IReadOnlyCollection<RoomInfo<TRoomMessage>>> RequestGetRoomListAsync()
         {
             if (!IsConnected) throw new ClientNotConnectedException();
-            
+
             _messageHandler.Send(IClientMsg.GetRoomList.Instance);
             var res = await _messageHandler.WaitMsgOfType<IServerMsg.RoomListResponse>();
 
