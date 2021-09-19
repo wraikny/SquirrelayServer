@@ -17,7 +17,7 @@ namespace SquirrelayServer.Common
     {
         [Key(0)]
         public int Id { get; set; }
-        
+
         [Key(1)]
         public bool IsVisible { get; set; }
 
