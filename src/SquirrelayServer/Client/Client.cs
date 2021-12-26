@@ -385,7 +385,7 @@ namespace SquirrelayServer.Client
         {
             if (!IsConnected) throw new ClientNotConnectedException();
 
-            var data = MessagePackSerializer.Serialize(message, _serverSerializerOptions);
+            var data = MessagePackSerializer.Serialize(message, _clientsSerializerOptions);
             _messageHandler.Send(new IClientMsg.SendGameMessage(data));
             return _messageHandler.WaitMsgOfType<IServerMsg.SendGameMessageResponse>();
         }
