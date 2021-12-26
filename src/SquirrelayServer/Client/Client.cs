@@ -459,11 +459,11 @@ namespace SquirrelayServer.Client
 
                     if (currentRoomInfo.PlayerStatusesImpl.ContainsKey(k))
                     {
-                        _updateContext.Enqueue(() => { _listener.OnPlayerEntered(k, status); });
+                        _updateContext.Enqueue(() => { _listener.OnPlayerStatusUpdated(k, status); });
                     }
                     else
                     {
-                        _updateContext.Enqueue(() => { _listener.OnPlayerStatusUpdated(k, status); });
+                        _updateContext.Enqueue(() => { _listener.OnPlayerEntered(k, status); });
                     }
 
                     currentRoomInfo.PlayerStatusesImpl[k] = status;
