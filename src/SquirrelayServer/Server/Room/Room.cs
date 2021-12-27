@@ -16,6 +16,7 @@ namespace SquirrelayServer.Server
     {
         private readonly MessagePackSerializerOptions _serializerOptions;
         private readonly RoomConfig _roomConfig;
+        private readonly ServerLoggingConfig _loggingConfig;
         private ulong? _owner;
         private readonly List<IClientHandler> _clients;
         private readonly Dictionary<ulong, RoomPlayerStatus> _playersStatuses;
@@ -41,10 +42,11 @@ namespace SquirrelayServer.Server
 
         public RoomStatus RoomStatus { get; private set; }
 
-        public Room(MessagePackSerializerOptions serializerOptions, RoomConfig roomConfig, int id, RoomInfo info, string password)
+        public Room(MessagePackSerializerOptions serializerOptions, RoomConfig roomConfig, ServerLoggingConfig loggingConfig, int id, RoomInfo info, string password)
         {
             _serializerOptions = serializerOptions;
             _roomConfig = roomConfig;
+            _loggingConfig = loggingConfig;
 
             _clients = new List<IClientHandler>();
 
@@ -72,6 +74,13 @@ namespace SquirrelayServer.Server
                 return null;
             }
         }
+
+        private void WriteInfo(string str, params object[] args)
+        {
+            if (!_loggingConfig.Logging || !_loggingConfig.RoomLogging) return;
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, str, args);
+        }
+
         private void Broadcast(IServerMsg msg)
         {
             if (_clients.Count == 0) return;
@@ -83,7 +92,10 @@ namespace SquirrelayServer.Server
                 client.SendByte(data);
             }
 
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Send message of {msg.GetType()} to clients in room({Id}).");
+            if (_loggingConfig.MessageLogging)
+            {
+                WriteInfo($"Send message of {msg.GetType()} to clients in room({Id}).");
+            }
         }
 
         private void UpdatePlayerStatus(ulong clientId, RoomPlayerStatus status)
@@ -167,7 +179,7 @@ namespace SquirrelayServer.Server
 
             EnterRoomWithoutCheck(client, status);
 
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): client({client.Id}) entered.");
+            WriteInfo($"Room({Id}): client({client.Id}) entered.");
 
             return IServerMsg.EnterRoomResponse.Success(_owner.Value, _playersStatuses, Info.Message);
         }
@@ -179,7 +191,7 @@ namespace SquirrelayServer.Server
                 throw new InvalidOperationException($"Client '{client.Id}' doesn't exists in room '{Id}'");
             }
 
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): client({client.Id}) exited.");
+            WriteInfo($"Room({Id}): client({client.Id}) exited.");
 
             if (_owner == client.Id)
             {
@@ -187,7 +199,7 @@ namespace SquirrelayServer.Server
                 {
                     _owner = _clients.First().Id;
 
-                    NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): set new owner({_owner}).");
+                    WriteInfo($"Room({Id}): set new owner({_owner}).");
                 }
                 else
                 {
@@ -195,7 +207,7 @@ namespace SquirrelayServer.Server
                     _owner = null;
                     _disposeStopwatch.Start();
 
-                    NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): owner exit.");
+                    WriteInfo($"Room({Id}): owner exit.");
 
                     if (RoomStatus == RoomStatus.Playing)
                     {
@@ -221,7 +233,7 @@ namespace SquirrelayServer.Server
 
             Broadcast(new IServerMsg.NotifyRoomOperation(RoomOperateKind.StartPlaying));
 
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): start playing.");
+            WriteInfo($"Room({Id}): start playing.");
         }
 
         private void FinishPlaying()
@@ -234,7 +246,7 @@ namespace SquirrelayServer.Server
 
             _temporalGameMessagesBuffer.Clear();
 
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({Id}): finish playing.");
+            WriteInfo($"Room({Id}): finish playing.");
         }
 
         public IServerMsg.OperateRoomResponse OperateRoom(IClientHandler client, RoomOperateKind kind)

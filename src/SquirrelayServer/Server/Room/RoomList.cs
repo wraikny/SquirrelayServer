@@ -17,6 +17,7 @@ namespace SquirrelayServer.Server
     internal sealed class RoomList
     {
         private readonly RoomConfig _roomConfig;
+        private readonly ServerLoggingConfig _loggingConfig;
 
         private readonly MessagePackSerializerOptions _serializerOptions;
 
@@ -31,9 +32,10 @@ namespace SquirrelayServer.Server
 
         internal Dictionary<int, RoomInfo> RoomInfoList => _roomInfoList;
 
-        public RoomList(RoomConfig roomConfig, MessagePackSerializerOptions serializerOptions)
+        public RoomList(RoomConfig roomConfig, ServerLoggingConfig loggingConfig, MessagePackSerializerOptions serializerOptions)
         {
             _roomConfig = roomConfig;
+            _loggingConfig = loggingConfig;
             _serializerOptions = serializerOptions;
 
             _rooms = new Dictionary<int, Room>();
@@ -41,6 +43,12 @@ namespace SquirrelayServer.Server
 
             _disposeIntervalStopWatch = new Stopwatch();
             _rand = new Random();
+        }
+
+        private void WriteInfo(string str, params object[] args)
+        {
+            if (!_loggingConfig.Logging || !_loggingConfig.RoomListLogging) return;
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, str, args);
         }
 
         public void Start()
@@ -87,7 +95,7 @@ namespace SquirrelayServer.Server
                 _rooms.Remove(id);
                 _roomInfoList.Remove(id);
 
-                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({id}): disposed.");
+                WriteInfo($"Room({id}): disposed.");
             }
         }
 
@@ -131,7 +139,7 @@ namespace SquirrelayServer.Server
 
             var password = _roomConfig.PasswordEnabled ? msg.Password : null;
 
-            var room = new Room(_serializerOptions, _roomConfig, roomId, roomInfo, password);
+            var room = new Room(_serializerOptions, _roomConfig, _loggingConfig, roomId, roomInfo, password);
 
             _rooms[roomId] = room;
             _roomInfoList[roomId] = roomInfo;
@@ -140,7 +148,7 @@ namespace SquirrelayServer.Server
 
             client.RoomId = roomId;
 
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Room({roomId}): created");
+            WriteInfo($"Room({roomId}): created");
 
             return IServerMsg.CreateRoomResponse.Success(roomId);
         }

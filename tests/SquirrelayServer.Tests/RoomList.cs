@@ -27,6 +27,15 @@ namespace SquirrelayServer.Tests
             GeneratedRoomIdRange = (1000, 9999),
         };
 
+        private static ServerLoggingConfig GetLoggingConfig() => new ServerLoggingConfig()
+        {
+            Logging = true,
+            ServerLogging = true,
+            RoomListLogging = true,
+            RoomLogging = true,
+            MessageLogging = false,
+        };
+
         private static Mock<Server.IClientHandler> CreateClientHandlerMock(ulong id)
         {
             var c = new Mock<Server.IClientHandler>();
@@ -35,9 +44,9 @@ namespace SquirrelayServer.Tests
             return c;
         }
 
-        private static (Server.RoomList, Mock<Server.IClientHandler>, int) CreateRoomWithOnePlayer(RoomConfig config, MessagePackSerializerOptions options)
+        private static (Server.RoomList, Mock<Server.IClientHandler>, int) CreateRoomWithOnePlayer(RoomConfig config, ServerLoggingConfig loggingConfig, MessagePackSerializerOptions options)
         {
-            var roomList = new Server.RoomList(config, options);
+            var roomList = new Server.RoomList(config, loggingConfig, options);
 
             var playerMock0 = CreateClientHandlerMock(0);
 
@@ -57,13 +66,13 @@ namespace SquirrelayServer.Tests
         [Fact]
         public void CreateRoom()
         {
-            _ = CreateRoomWithOnePlayer(GetRoomConfig(), Options.DefaultOptions);
+            _ = CreateRoomWithOnePlayer(GetRoomConfig(), GetLoggingConfig(), Options.DefaultOptions);
         }
 
         [Fact]
         public void EnterRoom()
         {
-            var (roomList, _, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), Options.DefaultOptions);
+            var (roomList, _, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), GetLoggingConfig(), Options.DefaultOptions);
             var info = roomList.GetRoomInfoList();
 
             var clientMock1 = CreateClientHandlerMock(1);
@@ -80,7 +89,7 @@ namespace SquirrelayServer.Tests
         {
             var config = GetRoomConfig();
             config.DisposeSecondsWhenNoMember = 0.0f;
-            var (roomList, clientMock0, _) = CreateRoomWithOnePlayer(config, Options.DefaultOptions);
+            var (roomList, clientMock0, _) = CreateRoomWithOnePlayer(config, GetLoggingConfig(), Options.DefaultOptions);
             var info = roomList.RoomInfoList;
 
             roomList.ExitRoom(clientMock0.Object);
@@ -95,7 +104,7 @@ namespace SquirrelayServer.Tests
         [Fact]
         public void SetPlayerStatus()
         {
-            var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), Options.DefaultOptions);
+            var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), GetLoggingConfig(), Options.DefaultOptions);
 
             var playerStatus = new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = new byte[0] });
             var setPlayerStatusRes = roomList.SetPlayerStatus(clientMock0.Object, playerStatus);
@@ -110,7 +119,7 @@ namespace SquirrelayServer.Tests
         {
             var roomConfig = GetRoomConfig();
             roomConfig.NumberOfPlayersRange = (2, 6);
-            var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(roomConfig, Options.DefaultOptions);
+            var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(roomConfig, GetLoggingConfig(), Options.DefaultOptions);
 
             {
                 var startPlaying = IClientMsg.OperateRoom.StartPlaying;
@@ -144,7 +153,7 @@ namespace SquirrelayServer.Tests
             var roomConfig = GetRoomConfig();
             roomConfig.TickMessageEnabled = true;
 
-            var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(roomConfig, options);
+            var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(roomConfig, GetLoggingConfig(), options);
 
             var startRes = roomList.OperateRoom(clientMock0.Object, IClientMsg.OperateRoom.StartPlaying);
 

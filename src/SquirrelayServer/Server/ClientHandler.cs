@@ -28,6 +28,7 @@ namespace SquirrelayServer.Server
     /// </summary>
     internal sealed class ClientHandler : IClientHandler
     {
+        private ServerLoggingConfig _loggingConfig;
         private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
 
         public ulong Id => _handler.Id.Value;
@@ -50,8 +51,10 @@ namespace SquirrelayServer.Server
 
         public int Latency { get; internal set; }
 
-        public ClientHandler(ulong id, NetPeerSender<IServerMsg> sender)
+        public ClientHandler(ulong id, NetPeerSender<IServerMsg> sender, ServerLoggingConfig loggingConfig)
         {
+            _loggingConfig = loggingConfig;
+
             //var subject = Subject.Synchronize(new Subject<IClientMsg>());
             _handler = new MessageHandler<IServerMsg, IClientMsg>()
             {
@@ -67,8 +70,11 @@ namespace SquirrelayServer.Server
 
         public void Send(IServerMsg msg, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered)
         {
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Send message of {msg.GetType()} to client({Id}).");
             _handler.Send(msg, channel, method);
+            if (_loggingConfig.Logging && _loggingConfig.MessageLogging)
+            {
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Send message of {msg.GetType()} to client({Id}).");
+            }
         }
 
         public void SendByte(byte[] data, byte channel = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered)

@@ -44,7 +44,7 @@ namespace SquirrelayServer.Server
             _clients = new Dictionary<int, ClientHandler>();
             _clientsByClientId = new Dictionary<ulong, ClientHandler>();
 
-            _roomList = new RoomList(config.RoomConfig, options);
+            _roomList = new RoomList(config.RoomConfig, config.ServerLoggingConfig, options);
 
             _fps = new FPS(config.NetConfig.UpdateTime);
 
@@ -73,12 +73,18 @@ namespace SquirrelayServer.Server
 #endif
         }
 
+        private void WriteNet(NetLogLevel info, string str, params object[] args)
+        {
+            if (!_config.ServerLoggingConfig.Logging || !_config.ServerLoggingConfig.ServerLogging) return;
+            NetDebug.Logger?.WriteNet(info, str, args);
+        }
+
         // Start the server.
         public async Task Start()
         {
             if (IsRunning)
             {
-                NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Server has already been running.");
+                WriteNet(NetLogLevel.Info, "Server has already been running.");
                 return;
             }
 
@@ -87,7 +93,7 @@ namespace SquirrelayServer.Server
                 throw new Exception("Failed to start the Server.");
             }
 
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Server started at port {0}.", _config.NetConfig.Port);
+            WriteNet(NetLogLevel.Info, $"Server started at port {_config.NetConfig.Port}.");
 
             IsRunning = true;
 
@@ -108,7 +114,7 @@ namespace SquirrelayServer.Server
         // Stop the server.
         public void Stop()
         {
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Server stop.");
+            WriteNet(NetLogLevel.Info, "Server stop.");
 
             _manager.Stop(true);
 
@@ -136,18 +142,18 @@ namespace SquirrelayServer.Server
                 {
                     if (request.AcceptIfKey(_server._config.NetConfig.ConnectionKey) is { })
                     {
-                        NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Accepted connection request.");
+                        _server.WriteNet(NetLogLevel.Info, "Accepted connection request.");
                     }
                     else
                     {
-                        NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Rejected connection request.");
+                        _server.WriteNet(NetLogLevel.Info, "Rejected connection request.");
                     }
                 }
                 else
                 {
                     request.Reject();
 
-                    NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Rejected connection request because of the MaxClientsCount.");
+                    _server.WriteNet(NetLogLevel.Info, "Rejected connection request because of the MaxClientsCount.");
 
                 }
             }
@@ -157,10 +163,10 @@ namespace SquirrelayServer.Server
                 var id = _server._clientIdNext;
                 _server._clientIdNext++;
 
-                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Client({id}) connected (Address = {peer.EndPoint.Address}).");
+                _server.WriteNet(NetLogLevel.Info, $"Client({id}) connected (Address = {peer.EndPoint.Address}).");
 
                 var sender = new NetPeerSender<IServerMsg>(peer, _server._options);
-                var client = new ClientHandler(id, sender);
+                var client = new ClientHandler(id, sender, _server._config.ServerLoggingConfig);
                 _server._clients[peer.Id] = client;
                 _server._clientsByClientId[id] = client;
 
@@ -176,7 +182,7 @@ namespace SquirrelayServer.Server
                 {
                     _server._roomList.ExitRoom(client);
                 }
-                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Client({client.Id}) disconnected (Address = {peer.EndPoint.Address}) because '{disconnectInfo.Reason}'.");
+                _server.WriteNet(NetLogLevel.Info, $"Client({client.Id}) disconnected (Address = {peer.EndPoint.Address}) because '{disconnectInfo.Reason}'.");
             }
 
             void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
@@ -193,7 +199,7 @@ namespace SquirrelayServer.Server
                     }
                     catch
                     {
-                        NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize message from client({client.Id}).");
+                        _server.WriteNet(NetLogLevel.Error, $"Failed to deserialize message from client({client.Id}).");
                         return;
                     }
                     finally

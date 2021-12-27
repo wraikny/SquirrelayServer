@@ -23,5 +23,13 @@
         "updatingDisposeStatusIntervalSeconds": 10.0,
         "numberOfPlayersRange": [ 1, 6 ],
         "generatedRoomIdRange": [ 1000, 9999 ]
+    },
+
+    "serverLoggingConfig": {
+        "logging": true,
+        "serverLogging": true,
+        "roomListLogging": true,
+        "roomLogging": true,
+        "messageLogging": false
     }
 }
