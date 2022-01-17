@@ -48,7 +48,7 @@ namespace SquirrelayServer.App
             NetDebug.Logger = logger;
 
             Console.CancelKeyPress += (_, _) => logger.Flush();
-            
+
             try
             {
                 // Load config
