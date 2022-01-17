@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        dotnet: [ 3.1.x ]
+        dotnet: [ 6.0.x ]
 
     runs-on: ${{ matrix.os }}
     if: "!contains(github.event.head_commit.message, 'ci:skip')"
@@ -44,8 +44,5 @@ jobs:
     - name: Build(Release)
       run: dotnet fake build -- RELEASE
 
-    - name: Test(Debug)
-      run: dotnet fake build -t test -- DEBUG
-
-    - name: Test(Release)
-      run: dotnet fake build -t test -- RELEASE
+    - name: Test
+      run: dotnet fake build -t test

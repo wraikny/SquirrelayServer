@@ -61,19 +61,9 @@ Target.create "Format.Check" (fun _ ->
 )
 
 Target.create "Test" (fun _ ->
-  let configuration =
-    args
-    |> Option.bind Array.tryHead
-    |> getConfiguration
-
   !! "tests/**/*.*proj"
   |> Seq.iter(fun proj ->
-    DotNet.test (fun p ->
-      { p with
-          Logger = Some "console;verbosity=detailed"
-          Configuration = configuration
-      }
-    ) proj
+    dotnet "test" $"%s{proj} -l \"console;verbosity=detailed\""
   )
 )
 
