@@ -18,10 +18,11 @@ namespace SquirrelayServer.Common
     [Union(7, typeof(SetPlayerStatusResponse))]
     [Union(8, typeof(SetRoomMessageResponse))]
     [Union(9, typeof(SendGameMessageResponse))]
-    [Union(10, typeof(UpdateRoomPlayersAndMessage))]
-    [Union(11, typeof(Tick))]
-    [Union(12, typeof(BroadcastGameMessages))]
-    [Union(13, typeof(NotifyRoomOperation))]
+    [Union(10, typeof(UpdateRoomPlayers))]
+    [Union(11, typeof(UpdateRoomMessage))]
+    [Union(12, typeof(Tick))]
+    [Union(13, typeof(BroadcastGameMessages))]
+    [Union(14, typeof(NotifyRoomOperation))]
     public interface IServerMsg
     {
         [MessagePackObject]
@@ -47,6 +48,9 @@ namespace SquirrelayServer.Common
             [Key(0)]
             public int Count { get; private set; }
 
+            [IgnoreMember]
+            public bool IsSuccess => true;
+
             [SerializationConstructor]
             public ClientsCountResponse(int count)
             {
@@ -59,6 +63,9 @@ namespace SquirrelayServer.Common
         {
             [Key(0)]
             public IReadOnlyCollection<RoomInfo> Info { get; private set; }
+
+            [IgnoreMember]
+            public bool IsSuccess => true;
 
             [SerializationConstructor]
             public RoomListResponse(IReadOnlyCollection<RoomInfo> info)
@@ -293,7 +300,7 @@ namespace SquirrelayServer.Common
         }
 
         [MessagePackObject]
-        public sealed class UpdateRoomPlayersAndMessage : IServerMsg
+        public sealed class UpdateRoomPlayers : IServerMsg
         {
             [Key(0)]
             public ulong? Owner { get; private set; }
@@ -301,15 +308,24 @@ namespace SquirrelayServer.Common
             [Key(1)]
             public IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses { get; private set; }
 
-            [Key(2)]
-            public byte[] RoomStatus { get; private set; }
-
             [SerializationConstructor]
-            public UpdateRoomPlayersAndMessage(ulong? owner, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomStatus)
+            public UpdateRoomPlayers(ulong? owner, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
             {
                 Owner = owner;
                 Statuses = statuses;
-                RoomStatus = roomStatus;
+            }
+        }
+
+        [MessagePackObject]
+        public sealed class UpdateRoomMessage : IServerMsg
+        {
+            [Key(0)]
+            public byte[] RoomMessage { get; private set; }
+
+            [SerializationConstructor]
+            public UpdateRoomMessage(byte[] roomMessage)
+            {
+                RoomMessage = roomMessage;
             }
         }
 

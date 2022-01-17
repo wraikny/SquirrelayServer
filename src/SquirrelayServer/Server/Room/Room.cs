@@ -105,27 +105,36 @@ namespace SquirrelayServer.Server
 
         public void Update()
         {
-            // When playerstatuses is updated or roomstatus is updated
-            if (_clients.Count > 0 && (_updatedPlayersStatuses.Count > 0 || _updatedRoomStatus))
+            if (_clients.Count > 0)
             {
-                foreach (var x in _updatedPlayersStatuses)
+                if (_updatedPlayersStatuses.Count > 0)
                 {
-                    if (x.Value is null)
+
+                    foreach (var x in _updatedPlayersStatuses)
                     {
-                        _playersStatuses.Remove(x.Key);
+                        if (x.Value is null)
+                        {
+                            _playersStatuses.Remove(x.Key);
+                        }
+                        else
+                        {
+                            _playersStatuses[x.Key] = x.Value;
+                        }
                     }
-                    else
-                    {
-                        _playersStatuses[x.Key] = x.Value;
-                    }
+
+                    var msg = new IServerMsg.UpdateRoomPlayers(_owner, _updatedPlayersStatuses);
+                    Broadcast(msg);
+
+                    // clear
+                    _updatedPlayersStatuses.Clear();
                 }
 
-                var msg = new IServerMsg.UpdateRoomPlayersAndMessage(_owner, _updatedPlayersStatuses, Info.Message);
-                Broadcast(msg);
-
-                // clear
-                _updatedPlayersStatuses.Clear();
-                _updatedRoomStatus = false;
+                if (_updatedRoomStatus)
+                {
+                    var msg = new IServerMsg.UpdateRoomMessage(Info.Message);
+                    Broadcast(msg);
+                    _updatedRoomStatus = false;
+                }
             }
 
             // When playing the game

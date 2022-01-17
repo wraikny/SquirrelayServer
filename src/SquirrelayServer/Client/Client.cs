@@ -247,7 +247,7 @@ namespace SquirrelayServer.Client
                 }
                 catch
                 {
-
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Error, "Failed to deserialize RoomMessage.");
                 }
 
                 infoList.Add(new RoomInfo<TRoomMessage>(info, message));
@@ -425,7 +425,7 @@ namespace SquirrelayServer.Client
             return currentRoomInfo;
         }
 
-        private void UpdateCurrentRoomInfo(CurrentRoomInfo<TPlayerStatus, TRoomMessage> currentRoomInfo, IServerMsg.UpdateRoomPlayersAndMessage msg)
+        private void UpdatePlayers(CurrentRoomInfo<TPlayerStatus, TRoomMessage> currentRoomInfo, IServerMsg.UpdateRoomPlayers msg)
         {
             if (currentRoomInfo.OwnerId != msg.Owner)
             {
@@ -469,8 +469,30 @@ namespace SquirrelayServer.Client
                     currentRoomInfo.PlayerStatusesImpl[k] = status;
                 }
             }
+        }
 
-            currentRoomInfo.SetRoomMessage(_clientsSerializerOptions, msg.RoomStatus);
+        private void UpdateRoomMessage(CurrentRoomInfo<TPlayerStatus, TRoomMessage> currentRoomInfo, IServerMsg.UpdateRoomMessage msg)
+        {
+            if (msg.RoomMessage is null)
+            {
+                currentRoomInfo.RoomMessage = null;
+            }
+            else
+            {
+                TRoomMessage roomMsg = null;
+                try
+                {
+                    roomMsg = MessagePackSerializer.Deserialize<TRoomMessage>(msg.RoomMessage, _clientsSerializerOptions);
+                    
+                }
+                catch
+                {
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize room status.");
+                    return;
+                }
+
+                _updateContext.Enqueue(() => { _listener.OnRoomMessageUpdated(roomMsg); });
+            }
         }
 
         private sealed class Listener : INetEventListener
@@ -545,11 +567,19 @@ namespace SquirrelayServer.Client
                             }
                             break;
                         }
-                    case IServerMsg.UpdateRoomPlayersAndMessage m:
+                    case IServerMsg.UpdateRoomPlayers m:
                         {
                             if (_client.CurrentRoom is { } r)
                             {
-                                _client.UpdateCurrentRoomInfo(r, m);
+                                _client.UpdatePlayers(r, m);
+                            }
+                            break;
+                        }
+                    case IServerMsg.UpdateRoomMessage m:
+                        {
+                            if (_client.CurrentRoom is { } r)
+                            {
+                                _client.UpdateRoomMessage(r, m);
                             }
                             break;
                         }
