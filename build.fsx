@@ -63,7 +63,11 @@ Target.create "Format.Check" (fun _ ->
 Target.create "Test" (fun _ ->
   !! "tests/**/*.*proj"
   |> Seq.iter(fun proj ->
-    dotnet "test" $"%s{proj} -l \"console;verbosity=detailed\""
+    DotNet.test (fun p ->
+      { p with
+          Logger = Some "console;verbosity=detailed"
+      }
+    ) proj
   )
 )
 
