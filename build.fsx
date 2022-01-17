@@ -123,8 +123,17 @@ Target.create "PreCommit" (fun _ ->
   Target.runSimple "Format" [] |> ignore
   Target.runSimple "Build" [ "debug" ] |> ignore
   Target.runSimple "Build" [ "release" ] |> ignore
-  Target.runSimple "Test" [ "debug" ] |> ignore
-  Target.runSimple "Test" [ "release" ] |> ignore
+  Target.runSimple "Test" [ ] |> ignore
+)
+
+Target.create "UpdatePackages" (fun _ ->
+  dotnet "add" "src/SquirrelayServer package MessagePack"
+  dotnet "add" "src/SquirrelayServer package MessagePackAnalyzer"
+  dotnet "add" "tests/SquirrelayServer.Tests package Microsoft.NET.Test.Sdk"
+  dotnet "add" "tests/SquirrelayServer.Tests package Moq"
+  dotnet "add" "tests/SquirrelayServer.Tests package xunit"
+  dotnet "add" "tests/SquirrelayServer.Tests package xunit.runner.visualstudio"
+  dotnet "add" "tests/SquirrelayServer.Tests package coverlet.collector"
 )
 
 Target.create "None" ignore

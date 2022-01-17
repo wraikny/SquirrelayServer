@@ -23,21 +23,6 @@ namespace SquirrelayServer.Server
     /// </summary>
     internal sealed class ClientHandler : IClientHandler
     {
-
-/* プロジェクト 'SquirrelayServer(netstandard2.1)' からのマージされていない変更
-前:
-        private ServerLoggingConfig _loggingConfig;
-後:
-        private readonly ServerLoggingConfig _loggingConfig;
-*/
-
-/* プロジェクト 'SquirrelayServer(net5.0)' からのマージされていない変更
-前:
-        private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
-後:
-        private readonly ServerLoggingConfig _loggingConfig;
-        private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
-*/
         private readonly ServerLoggingConfig _loggingConfig;
         private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
 
