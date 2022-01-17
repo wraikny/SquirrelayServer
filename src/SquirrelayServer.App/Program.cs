@@ -23,8 +23,8 @@ namespace SquirrelayServer.App
             var current = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
             var output = $"[{current}] {msg}";
 
-            //_stream.WriteLine(output);
-            //_stream.Flush();
+            _stream.WriteLine(output);
+            _stream.Flush();
 
             Console.WriteLine(output);
         }
