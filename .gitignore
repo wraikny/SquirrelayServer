@@ -362,4 +362,5 @@ MigrationBackup/
 FodyWeavers.xsd
 
 /output/**
-log.txt
+
+/squireelayserver-log
