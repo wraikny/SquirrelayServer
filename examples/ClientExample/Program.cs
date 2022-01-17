@@ -71,7 +71,11 @@ namespace ClientExample
 
         private static async Task Run(Client<PlayerStatus, RoomMessage, GameMessage> client)
         {
-            await client.Start("localhost");
+            if (!await client.Start("localhost"))
+            {
+                // on failed to connect
+                return;
+            }
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client started");
 

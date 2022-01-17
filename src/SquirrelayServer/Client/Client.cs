@@ -95,22 +95,21 @@ namespace SquirrelayServer.Client
         /// <param name="host"></param>
         /// <param name="listener"></param>
         /// <returns></returns>
-        public async Task Start(string host)
+        public async Task<bool> Start(string host)
         {
             if (IsStarted)
             {
                 NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client has already been started.");
-                return;
+                return false;
             }
 
             IsStarted = true;
-
 
             _manager.Start();
 
             _manager.Connect(host, _netConfig.Port, _netConfig.ConnectionKey);
 
-            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client is waiting to be connected.");
+            NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client is waiting for connection.");
 
             var waitHello = _messageHandler.WaitMsgOfType<IServerMsg.Hello>();
             while (_messageHandler.SenderIsNull)
@@ -119,7 +118,8 @@ namespace SquirrelayServer.Client
 
                 if (!IsStarted)
                 {
-                    throw new OperationCanceledException("Failed to wait connection bacause client is stopped.");
+                    NetDebug.Logger?.WriteNet(NetLogLevel.Error, "Failed to establish connection.");
+                    return false;
                 }
             }
 
@@ -128,6 +128,7 @@ namespace SquirrelayServer.Client
             RoomConfig = hello.RoomConfig;
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Hello from server, received self id({Id}).");
+            return true;
         }
 
         /// <summary>
@@ -513,7 +514,7 @@ namespace SquirrelayServer.Client
             void INetEventListener.OnPeerConnected(NetPeer peer)
             {
                 _client.IsConnected = true;
-                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Connected to the server.");
+                NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Connection established.");
 
                 var sender = new NetPeerSender<IClientMsg>(peer, _client._serverSerializerOptions);
                 _client._messageHandler.SetSender(sender);
