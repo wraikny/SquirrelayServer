@@ -4,8 +4,6 @@ using System.Threading.Tasks;
 
 using LiteNetLib;
 
-using MessagePack;
-
 using SquirrelayServer.Common;
 
 namespace SquirrelayServer.App

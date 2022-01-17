@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 using LiteNetLib;
@@ -185,7 +182,7 @@ namespace SquirrelayServer.Server
                 _server.WriteNet(NetLogLevel.Info, $"Client({client.Id}) disconnected (Address = {peer.EndPoint.Address}) because '{disconnectInfo.Reason}'.");
             }
 
-            void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
+            void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod)
             {
                 var client = _server._clients[peer.Id];
 

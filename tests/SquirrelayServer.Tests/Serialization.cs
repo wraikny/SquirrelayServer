@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 using MessagePack;
@@ -106,7 +104,7 @@ namespace SquirrelayServer.Tests
             {
                 ulong? owner = null;
                 var statuses = new Dictionary<ulong, RoomPlayerStatus>();
-                var roomMessage = new byte[1];
+                _ = new byte[1];
                 Check<IServerMsg.UpdateRoomPlayers, IServerMsg>(new IServerMsg.UpdateRoomPlayers(owner, statuses));
             }
 
@@ -129,7 +127,7 @@ namespace SquirrelayServer.Tests
                         }
                     }
                 };
-                var roomMessage = new byte[1];
+                _ = new byte[1];
                 Check<IServerMsg.UpdateRoomPlayers, IServerMsg>(new IServerMsg.UpdateRoomPlayers(owner, statuses));
             }
         }

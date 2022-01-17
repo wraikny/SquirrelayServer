@@ -25,7 +25,7 @@ namespace SquirrelayServer.Client
 
         private readonly List<RelayedGameMessage> _gameMessages;
 
-        private MessageHandler<IClientMsg, IServerMsg> _messageHandler;
+        private readonly MessageHandler<IClientMsg, IServerMsg> _messageHandler;
         private readonly IClientListener<TPlayerStatus, TRoomMessage, TMsg> _listener;
 
         public CurrentRoomInfo<TPlayerStatus, TRoomMessage> CurrentRoom { get; private set; }
@@ -483,7 +483,7 @@ namespace SquirrelayServer.Client
                 try
                 {
                     roomMsg = MessagePackSerializer.Deserialize<TRoomMessage>(msg.RoomMessage, _clientsSerializerOptions);
-                    
+
                 }
                 catch
                 {
@@ -526,7 +526,7 @@ namespace SquirrelayServer.Client
                 _client.Stop();
             }
 
-            void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
+            void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod)
             {
                 IServerMsg msg = null;
                 try
