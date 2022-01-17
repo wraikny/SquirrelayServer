@@ -8,9 +8,15 @@ namespace SquirrelayServer.Common
     public sealed class RoomPlayerStatus
     {
         [Key(0)]
-        public byte[] Data { get; set; }
+        public byte[]? Data { get; private set; }
 
-        public override bool Equals(object obj)
+        [SerializationConstructor]
+        public RoomPlayerStatus(byte[]? data)
+        {
+            Data = data;
+        }
+
+        public override bool Equals(object? obj)
         {
             if (!(obj is RoomPlayerStatus)) return false;
 
@@ -21,7 +27,7 @@ namespace SquirrelayServer.Common
 
         public override int GetHashCode()
         {
-            return Data.GetHashCode();
+            return Data?.GetHashCode() ?? 0;
         }
     }
 
@@ -37,7 +43,7 @@ namespace SquirrelayServer.Common
         [Key(2)]
         public byte[] Data { get; private set; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (!(obj is RelayedGameMessage)) return false;
 

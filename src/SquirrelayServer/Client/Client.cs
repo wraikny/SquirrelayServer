@@ -28,11 +28,11 @@ namespace SquirrelayServer.Client
         private readonly MessageHandler<IClientMsg, IServerMsg> _messageHandler;
         private readonly IClientListener<TPlayerStatus, TRoomMessage, TMsg> _listener;
 
-        public CurrentRoomInfo<TPlayerStatus, TRoomMessage> CurrentRoom { get; private set; }
+        public CurrentRoomInfo<TPlayerStatus, TRoomMessage>? CurrentRoom { get; private set; }
 
         public ulong? Id { get; private set; }
 
-        public RoomConfig RoomConfig { get; private set; }
+        public RoomConfig? RoomConfig { get; private set; }
 
         public int Latency { get; private set; }
 
@@ -167,7 +167,7 @@ namespace SquirrelayServer.Client
 
             if (!IsStarted || !IsConnected) return;
 
-            List<Exception> exceptions = null;
+            List<Exception>? exceptions = null;
 
             while (_updateContext.TryDequeue(out var action))
             {
@@ -240,7 +240,7 @@ namespace SquirrelayServer.Client
             var infoList = new List<RoomInfo<TRoomMessage>>();
             foreach (var info in res.Info)
             {
-                TRoomMessage message = null;
+                TRoomMessage? message = null;
                 try
                 {
                     message = MessagePackSerializer.Deserialize<TRoomMessage>(info.Message, _clientsSerializerOptions);
@@ -265,9 +265,9 @@ namespace SquirrelayServer.Client
         /// <param name="playerStatus"></param>
         /// <param name="roomMessage"></param>
         /// <returns></returns>
-        public async Task<IServerMsg.CreateRoomResponse> RequestCreateRoomAsync(bool isVisible = true, string password = null, int? maxNumberOfPlayers = null, TPlayerStatus playerStatus = null, TRoomMessage roomMessage = null)
+        public async Task<IServerMsg.CreateRoomResponse> RequestCreateRoomAsync(bool isVisible = true, string? password = null, int? maxNumberOfPlayers = null, TPlayerStatus? playerStatus = null, TRoomMessage? roomMessage = null)
         {
-            if (!IsConnected) throw new ClientNotConnectedException();
+            if (!IsConnected || RoomConfig is null) throw new ClientNotConnectedException();
 
             isVisible = RoomConfig.InvisibleEnabled ? isVisible : true;
             password = RoomConfig.PasswordEnabled ? password : null;
@@ -293,9 +293,9 @@ namespace SquirrelayServer.Client
         /// <param name="password"></param>
         /// <param name="playerStatus"></param>
         /// <returns></returns>
-        public async Task<IServerMsg.EnterRoomResponse<TRoomMessage>> RequestEnterRoomAsync(int roomId, string password = null, TPlayerStatus playerStatus = null)
+        public async Task<IServerMsg.EnterRoomResponse<TRoomMessage>> RequestEnterRoomAsync(int roomId, string? password = null, TPlayerStatus? playerStatus = null)
         {
-            if (!IsConnected) throw new ClientNotConnectedException();
+            if (!IsConnected || RoomConfig is null) throw new ClientNotConnectedException();
 
             var playerStatusData = playerStatus is null ? null : MessagePackSerializer.Serialize(playerStatus, _clientsSerializerOptions);
 
@@ -304,8 +304,9 @@ namespace SquirrelayServer.Client
 
             if (res.IsSuccess)
             {
-                CurrentRoom = CreateCurrentRoomInfo(roomId, res.OwnerId, res.Statuses, res.RoomMessage);
-                var response = new IServerMsg.EnterRoomResponse<TRoomMessage>(res.Result, res.OwnerId, res.Statuses, CurrentRoom.RoomMessage);
+                var currentRoom = CreateCurrentRoomInfo(roomId, res.OwnerId, res.Statuses, res.RoomMessage);
+                CurrentRoom = currentRoom;
+                var response = new IServerMsg.EnterRoomResponse<TRoomMessage>(res.Result, res.OwnerId, res.Statuses, currentRoom.RoomMessage);
                 return response;
             }
 
@@ -358,7 +359,7 @@ namespace SquirrelayServer.Client
             if (!IsConnected) throw new ClientNotConnectedException();
 
             var data = MessagePackSerializer.Serialize(status, _clientsSerializerOptions);
-            _messageHandler.Send(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = data }));
+            _messageHandler.Send(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus(data)));
             return _messageHandler.WaitMsgOfType<IServerMsg.SetPlayerStatusResponse>();
         }
 
@@ -390,7 +391,7 @@ namespace SquirrelayServer.Client
             return _messageHandler.WaitMsgOfType<IServerMsg.SendGameMessageResponse>();
         }
 
-        private CurrentRoomInfo<TPlayerStatus, TRoomMessage> CreateCurrentRoomInfo(int id, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomMessage)
+        private CurrentRoomInfo<TPlayerStatus, TRoomMessage> CreateCurrentRoomInfo(int id, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus>? statuses, byte[]? roomMessage)
         {
             var currentRoomInfo = new CurrentRoomInfo<TPlayerStatus, TRoomMessage>(id, ownerId);
 
@@ -442,7 +443,7 @@ namespace SquirrelayServer.Client
                 }
                 else
                 {
-                    TPlayerStatus status = null;
+                    TPlayerStatus? status = null;
 
                     if (v.Data != null)
                     {
@@ -479,7 +480,7 @@ namespace SquirrelayServer.Client
             }
             else
             {
-                TRoomMessage roomMsg = null;
+                TRoomMessage? roomMsg = null;
                 try
                 {
                     roomMsg = MessagePackSerializer.Deserialize<TRoomMessage>(msg.RoomMessage, _clientsSerializerOptions);
@@ -528,7 +529,7 @@ namespace SquirrelayServer.Client
 
             void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod)
             {
-                IServerMsg msg = null;
+                IServerMsg? msg = null;
                 try
                 {
                     msg = MessagePackSerializer.Deserialize<IServerMsg>(reader.GetRemainingBytesSegment(), _client._serverSerializerOptions);

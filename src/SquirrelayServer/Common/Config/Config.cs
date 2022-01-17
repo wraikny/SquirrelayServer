@@ -19,21 +19,21 @@ namespace SquirrelayServer.Common
         //[DataMember(Name = "gameConfig")]
         //public GameConfig GameConfig { get; private set; }
 
-        public static Config LoadFromJson(string json)
+        public static Config? LoadFromJson(string json)
         {
             var settings = new DataContractJsonSerializerSettings();
 
             return Utils.DeserializeJson<Config>(json, settings);
         }
 
-        public static ValueTask<Config> LoadFromFileAsync(string path)
+        public static ValueTask<Config?> LoadFromFileAsync(string path)
         {
             var settings = new DataContractJsonSerializerSettings();
 
             return Utils.DeserializeJsonFromFileAsync<Config>(path, settings);
         }
 
-        public static Config LoadFromFile(string path)
+        public static Config? LoadFromFile(string path)
         {
             var settings = new DataContractJsonSerializerSettings();
 
@@ -42,11 +42,6 @@ namespace SquirrelayServer.Common
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext c)
-        {
-
-        }
-
-        public Config()
         {
 
         }

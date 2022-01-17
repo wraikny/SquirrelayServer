@@ -103,7 +103,7 @@ namespace SquirrelayServer.Tests
         {
             var (roomList, clientMock0, roomId) = CreateRoomWithOnePlayer(GetRoomConfig(), GetLoggingConfig(), Options.DefaultOptions);
 
-            var playerStatus = new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = new byte[0] });
+            var playerStatus = new IClientMsg.SetPlayerStatus(new RoomPlayerStatus(new byte[0]));
             var setPlayerStatusRes = roomList.SetPlayerStatus(clientMock0.Object, playerStatus);
 
             Assert.True(setPlayerStatusRes.IsSuccess);

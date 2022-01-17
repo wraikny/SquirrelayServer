@@ -99,7 +99,7 @@ namespace SquirrelayServer.Common
             _generatedRoomIdRange = new int[2];
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (!(obj is RoomConfig)) return false;
 

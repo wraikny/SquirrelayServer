@@ -19,7 +19,7 @@ namespace SquirrelayServer.Server
         private ulong? _owner;
         private readonly List<IClientHandler> _clients;
         private readonly Dictionary<ulong, RoomPlayerStatus> _playersStatuses;
-        private readonly Dictionary<ulong, RoomPlayerStatus> _updatedPlayersStatuses;
+        private readonly Dictionary<ulong, RoomPlayerStatus?> _updatedPlayersStatuses;
 
         // StopWatch to count the time when Room is disposed.
         private readonly Stopwatch _disposeStopwatch;
@@ -35,13 +35,13 @@ namespace SquirrelayServer.Server
 
         public int Id { get; private set; }
         public RoomInfo Info { get; private set; }
-        public string Password { get; private set; }
+        public string? Password { get; private set; }
 
         public int PlayersCount => _clients.Count;
 
         public RoomStatus RoomStatus { get; private set; }
 
-        public Room(MessagePackSerializerOptions serializerOptions, RoomConfig roomConfig, ServerLoggingConfig loggingConfig, int id, RoomInfo info, string password)
+        public Room(MessagePackSerializerOptions serializerOptions, RoomConfig roomConfig, ServerLoggingConfig loggingConfig, int id, RoomInfo info, string? password)
         {
             _serializerOptions = serializerOptions;
             _roomConfig = roomConfig;
@@ -50,7 +50,7 @@ namespace SquirrelayServer.Server
             _clients = new List<IClientHandler>();
 
             _playersStatuses = new Dictionary<ulong, RoomPlayerStatus>();
-            _updatedPlayersStatuses = new Dictionary<ulong, RoomPlayerStatus>();
+            _updatedPlayersStatuses = new Dictionary<ulong, RoomPlayerStatus?>();
 
             _disposeStopwatch = new Stopwatch();
             _gameStopWatch = new Stopwatch();
@@ -97,7 +97,7 @@ namespace SquirrelayServer.Server
             }
         }
 
-        private void UpdatePlayerStatus(ulong clientId, RoomPlayerStatus status)
+        private void UpdatePlayerStatus(ulong clientId, RoomPlayerStatus? status)
         {
             _updatedPlayersStatuses[clientId] = status;
         }
@@ -154,7 +154,7 @@ namespace SquirrelayServer.Server
             }
         }
 
-        public void EnterRoomWithoutCheck(IClientHandler client, byte[] status)
+        public ulong EnterRoomWithoutCheck(IClientHandler client, byte[]? status)
         {
             _clients.Add(client);
             Info.NumberOfPlayers++;
@@ -170,10 +170,12 @@ namespace SquirrelayServer.Server
                 _disposeStopwatch.Reset();
             }
 
-            UpdatePlayerStatus(client.Id, new RoomPlayerStatus { Data = status });
+            UpdatePlayerStatus(client.Id, new RoomPlayerStatus(status));
+
+            return _owner.Value;
         }
 
-        public IServerMsg.EnterRoomResponse<byte[]> EnterRoom(IClientHandler client, string password, byte[] status)
+        public IServerMsg.EnterRoomResponse<byte[]> EnterRoom(IClientHandler client, string? password, byte[]? status)
         {
             if (Password is string p && p != password) return IServerMsg.EnterRoomResponse.InvalidPassword;
             if (Info.MaxNumberOfPlayers == _clients.Count) return IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation;
@@ -185,11 +187,11 @@ namespace SquirrelayServer.Server
 
             if (_clients.Contains(client)) return IServerMsg.EnterRoomResponse.AlreadyEntered;
 
-            EnterRoomWithoutCheck(client, status);
+            var ownerId = EnterRoomWithoutCheck(client, status);
 
             WriteInfo($"Room({Id}): client({client.Id}) entered.");
 
-            return IServerMsg.EnterRoomResponse.Success(_owner.Value, _playersStatuses, Info.Message);
+            return IServerMsg.EnterRoomResponse.Success(ownerId, _playersStatuses, Info.Message);
         }
 
         public IServerMsg.ExitRoomResponse ExitRoom(IClientHandler client)

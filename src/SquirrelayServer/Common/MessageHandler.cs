@@ -17,16 +17,19 @@ namespace SquirrelayServer.Common
         {
             public Type Type { get; set; }
 
-            public TRecv Msg { get; set; }
+            public TRecv? Msg { get; set; }
 
             public bool IsCanceled { get; set; } = false;
+
+            public Receiver(Type type)
+            {
+                Type = type;
+            }
         }
 
         private readonly List<Receiver> _receivers;
 
-        private ISender<TSend> _sender;
-
-        public ulong? Id { get; set; }
+        private ISender<TSend>? _sender;
 
         public MessageHandler()
         {
@@ -34,7 +37,7 @@ namespace SquirrelayServer.Common
         }
 
         public bool SenderIsNull => _sender is null;
-        public void SetSender(ISender<TSend> sender)
+        public void SetSender(ISender<TSend>? sender)
         {
             _sender = sender;
         }
@@ -54,16 +57,20 @@ namespace SquirrelayServer.Common
         public async Task<URecv> WaitMsgOfType<URecv>()
             where URecv : class, TRecv
         {
-            var receiver = new Receiver { Type = typeof(URecv) };
+            var receiver = new Receiver(typeof(URecv));
             _receivers.Add(receiver);
 
-            while (receiver.Msg is null)
+            while (true)
             {
                 if (receiver.IsCanceled) throw new OperationCanceledException();
 
                 await Task.Yield();
+
+                if (receiver.Msg is URecv msg)
+                {
+                    return msg;
+                }
             }
-            return receiver.Msg as URecv;
         }
 
         /// <summary>
@@ -93,12 +100,12 @@ namespace SquirrelayServer.Common
         /// </summary>
         public void Send(TSend msg, byte channelNumber = 0, DeliveryMethod method = DeliveryMethod.ReliableOrdered)
         {
-            _sender.Send(msg, channelNumber, method);
+            _sender?.Send(msg, channelNumber, method);
         }
 
         public void SendByte(byte[] data, byte channel, DeliveryMethod method)
         {
-            _sender.SendByte(data, channel, method);
+            _sender?.SendByte(data, channel, method);
         }
 
         ///// <summary>

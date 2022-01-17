@@ -114,20 +114,13 @@ namespace SquirrelayServer.Tests
                 {
                     {
                         0uL,
-                        new RoomPlayerStatus
-                        {
-                            Data = new byte[2],
-                        }
+                        new RoomPlayerStatus(new byte[]{ 1, 4 })
                     },
                     {
                         1uL,
-                        new RoomPlayerStatus
-                        {
-                            Data = new byte[5],
-                        }
+                        new RoomPlayerStatus(new byte[]{ 9, 3, 5, 2, 0})
                     }
                 };
-                _ = new byte[1];
                 Check<IServerMsg.UpdateRoomPlayers, IServerMsg>(new IServerMsg.UpdateRoomPlayers(owner, statuses));
             }
         }
@@ -210,9 +203,9 @@ namespace SquirrelayServer.Tests
         public void ClientMsg_SetPlayerStatus()
         {
             Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(null));
-            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = null }));
-            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = new byte[0] }));
-            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus { Data = new byte[1] }));
+            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus(null)));
+            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus(new byte[]{})));
+            Check<IClientMsg.SetPlayerStatus, IClientMsg>(new IClientMsg.SetPlayerStatus(new RoomPlayerStatus(new byte[]{42})));
         }
 
         [Fact]

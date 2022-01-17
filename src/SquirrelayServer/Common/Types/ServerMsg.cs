@@ -115,7 +115,7 @@ namespace SquirrelayServer.Common
                 InvalidRoomStatus = 5,
             }
 
-            internal static EnterRoomResponse<byte[]> Success(ulong ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[] roomMessage)
+            internal static EnterRoomResponse<byte[]> Success(ulong ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[]? roomMessage)
                 => new EnterRoomResponse<byte[]>(ResultKind.Success, ownerId, statuses, roomMessage);
             internal static readonly EnterRoomResponse<byte[]> RoomNotFound = new EnterRoomResponse<byte[]>(ResultKind.RoomNotFound);
             internal static readonly EnterRoomResponse<byte[]> InvalidPassword = new EnterRoomResponse<byte[]>(ResultKind.InvalidPassword);
@@ -136,17 +136,17 @@ namespace SquirrelayServer.Common
             public ulong? OwnerId { get; private set; }
 
             [Key(2)]
-            public IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses { get; private set; }
+            public IReadOnlyDictionary<ulong, RoomPlayerStatus>? Statuses { get; private set; }
 
             [Key(3)]
-            public TRoomMessage RoomMessage { get; private set; }
+            public TRoomMessage? RoomMessage { get; private set; }
 
             [IgnoreMember]
             public bool IsSuccess => Result == EnterRoomResponse.ResultKind.Success;
 
 
             [SerializationConstructor]
-            public EnterRoomResponse(EnterRoomResponse.ResultKind result, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, TRoomMessage roomMessage)
+            public EnterRoomResponse(EnterRoomResponse.ResultKind result, ulong? ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus>? statuses, TRoomMessage? roomMessage)
             {
                 Result = result;
                 OwnerId = ownerId;
@@ -306,10 +306,10 @@ namespace SquirrelayServer.Common
             public ulong? Owner { get; private set; }
 
             [Key(1)]
-            public IReadOnlyDictionary<ulong, RoomPlayerStatus> Statuses { get; private set; }
+            public IReadOnlyDictionary<ulong, RoomPlayerStatus?> Statuses { get; private set; }
 
             [SerializationConstructor]
-            public UpdateRoomPlayers(ulong? owner, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses)
+            public UpdateRoomPlayers(ulong? owner, IReadOnlyDictionary<ulong, RoomPlayerStatus?> statuses)
             {
                 Owner = owner;
                 Statuses = statuses;
@@ -320,10 +320,10 @@ namespace SquirrelayServer.Common
         public sealed class UpdateRoomMessage : IServerMsg
         {
             [Key(0)]
-            public byte[] RoomMessage { get; private set; }
+            public byte[]? RoomMessage { get; private set; }
 
             [SerializationConstructor]
-            public UpdateRoomMessage(byte[] roomMessage)
+            public UpdateRoomMessage(byte[]? roomMessage)
             {
                 RoomMessage = roomMessage;
             }

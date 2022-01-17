@@ -23,11 +23,11 @@ namespace SquirrelayServer.Client
 
         public ulong? OwnerId { get; internal set; }
 
-        internal Dictionary<ulong, TPlayerStatus> PlayerStatusesImpl { get; set; }
+        internal Dictionary<ulong, TPlayerStatus?> PlayerStatusesImpl { get; set; }
 
-        public IReadOnlyDictionary<ulong, TPlayerStatus> PlayerStatuses => PlayerStatusesImpl;
+        public IReadOnlyDictionary<ulong, TPlayerStatus?> PlayerStatuses => PlayerStatusesImpl;
 
-        public TRoomMessage RoomMessage { get; internal set; }
+        public TRoomMessage? RoomMessage { get; internal set; }
 
         public bool IsPlaying { get; internal set; }
 
@@ -35,29 +35,28 @@ namespace SquirrelayServer.Client
         {
             Id = id;
             OwnerId = ownerId;
-            PlayerStatusesImpl = new Dictionary<ulong, TPlayerStatus>();
+            PlayerStatusesImpl = new Dictionary<ulong, TPlayerStatus?>();
         }
         public void OnNotifiedRoomOperation(RoomOperateKind kind)
         {
             IsPlaying = kind == RoomOperateKind.StartPlaying;
         }
 
-        internal void SetRoomMessage(MessagePackSerializerOptions options, byte[] roomMessage)
+        internal void SetRoomMessage(MessagePackSerializerOptions options, byte[]? roomMessage)
         {
             if (roomMessage is null)
             {
                 RoomMessage = null;
+                return;
             }
-            else
+
+            try
             {
-                try
-                {
-                    RoomMessage = MessagePackSerializer.Deserialize<TRoomMessage>(roomMessage, options);
-                }
-                catch
-                {
-                    NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize room status.");
-                }
+                RoomMessage = MessagePackSerializer.Deserialize<TRoomMessage>(roomMessage, options);
+            }
+            catch
+            {
+                NetDebug.Logger?.WriteNet(NetLogLevel.Error, $"Failed to deserialize room status.");
             }
         }
     }

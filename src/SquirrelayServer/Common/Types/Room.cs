@@ -28,7 +28,7 @@ namespace SquirrelayServer.Common
         public int NumberOfPlayers { get; set; }
 
         [Key(4)]
-        public byte[] Message { get; set; }
+        public byte[]? Message { get; set; }
 
         [Key(5)]
         public bool IsPlaying { get; set; }
@@ -42,11 +42,11 @@ namespace SquirrelayServer.Common
 
         public int NumberOfPlayers { get; set; }
 
-        public T Message { get; set; }
+        public T? Message { get; set; }
 
         public bool IsPlaying { get; set; }
 
-        public RoomInfo(RoomInfo roomInfo, T message)
+        public RoomInfo(RoomInfo roomInfo, T? message)
         {
             Id = roomInfo.Id;
             IsVisible = roomInfo.IsVisible;

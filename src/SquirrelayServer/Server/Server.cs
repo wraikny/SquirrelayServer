@@ -173,6 +173,11 @@ namespace SquirrelayServer.Server
             void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
             {
                 _server._clients.Remove(peer.Id, out var client);
+                if (client is null)
+                {
+                    _server.WriteNet(NetLogLevel.Info, $"Client of Peer({peer.Id}) is not found.");
+                    return;
+                }
                 _server._clientsByClientId.Remove(client.Id);
 
                 if (client.RoomId is { })
@@ -188,7 +193,7 @@ namespace SquirrelayServer.Server
 
                 try
                 {
-                    IClientMsg clientMsg = null;
+                    IClientMsg? clientMsg = null;
 
                     try
                     {

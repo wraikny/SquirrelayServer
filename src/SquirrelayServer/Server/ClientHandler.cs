@@ -26,7 +26,7 @@ namespace SquirrelayServer.Server
         private readonly ServerLoggingConfig _loggingConfig;
         private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
 
-        public ulong Id => _handler.Id.Value;
+        public ulong Id { get; internal set; }
 
         private int? _roomId;
 
@@ -37,7 +37,7 @@ namespace SquirrelayServer.Server
             {
                 if ((value is { }) && (_roomId is { }))
                 {
-                    throw new InvalidOperationException($"Client '{_handler.Id}' has been already in room '{_roomId}'");
+                    throw new InvalidOperationException($"Client '{Id}' has been already in room '{_roomId}'");
                 }
 
                 _roomId = value;
@@ -49,12 +49,11 @@ namespace SquirrelayServer.Server
         public ClientHandler(ulong id, NetPeerSender<IServerMsg> sender, ServerLoggingConfig loggingConfig)
         {
             _loggingConfig = loggingConfig;
+            
+            Id = id;
 
             //var subject = Subject.Synchronize(new Subject<IClientMsg>());
-            _handler = new MessageHandler<IServerMsg, IClientMsg>()
-            {
-                Id = id,
-            };
+            _handler = new MessageHandler<IServerMsg, IClientMsg>();
             _handler.SetSender(sender);
         }
 

@@ -39,20 +39,20 @@ namespace SquirrelayServer.Common
             public bool IsVisible { get; private set; }
 
             [Key(1)]
-            public string Password { get; private set; }
+            public string? Password { get; private set; }
 
             [Key(2)]
             public int MaxNumberOfPlayers { get; private set; }
 
             [Key(3)]
-            public byte[] PlayerStatus { get; private set; }
+            public byte[]? PlayerStatus { get; private set; }
 
             [Key(4)]
-            public byte[] RoomMessage { get; private set; }
+            public byte[]? RoomMessage { get; private set; }
 
 
             [SerializationConstructor]
-            public CreateRoom(bool isVisible, string password, int maxNumberOfPlayers, byte[] playerStatus, byte[] roomMessage)
+            public CreateRoom(bool isVisible, string? password, int maxNumberOfPlayers, byte[]? playerStatus, byte[]? roomMessage)
             {
                 IsVisible = isVisible;
                 Password = password;
@@ -69,13 +69,13 @@ namespace SquirrelayServer.Common
             public int RoomId { get; private set; }
 
             [Key(1)]
-            public string Password { get; private set; }
+            public string? Password { get; private set; }
 
             [Key(2)]
-            public byte[] Status { get; private set; }
+            public byte[]? Status { get; private set; }
 
             [SerializationConstructor]
-            public EnterRoom(int roomId, string password, byte[] status)
+            public EnterRoom(int roomId, string? password, byte[]? status)
             {
                 RoomId = roomId;
                 Password = password;

@@ -55,7 +55,7 @@ namespace SquirrelayServer.Common
             public int? SimulationPacketLossChance { get; set; }
 
             [DataMember(Name = "simulateLatencyRange")]
-            private int[] _simulationLatencyRange;
+            private int[]? _simulationLatencyRange;
 
             [IgnoreDataMember]
             public (int, int)? SimulationLatencyRange
@@ -98,8 +98,6 @@ namespace SquirrelayServer.Common
                     throw new InvalidOperationException("Length of simulationLatencyRange is not equal to 2");
                 }
             }
-
-            public DebugOnlyConfig() { }
         }
 #endif
 

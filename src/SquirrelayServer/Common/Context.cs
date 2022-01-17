@@ -8,9 +8,9 @@ namespace SquirrelayServer.Common
         private readonly struct Entry
         {
             private readonly SendOrPostCallback _d;
-            private readonly object _state;
+            private readonly object? _state;
 
-            internal Entry(SendOrPostCallback d, object state)
+            internal Entry(SendOrPostCallback d, object? state)
             {
                 _d = d;
                 _state = state;
@@ -24,7 +24,7 @@ namespace SquirrelayServer.Common
 
         private readonly ConcurrentQueue<Entry> _entries = new ConcurrentQueue<Entry>();
 
-        public override void Post(SendOrPostCallback d, object state)
+        public override void Post(SendOrPostCallback? d, object? state)
         {
             if (d is null) return;
             _entries.Enqueue(new Entry(d, state));
