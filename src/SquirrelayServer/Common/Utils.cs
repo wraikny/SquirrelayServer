@@ -55,7 +55,8 @@ namespace SquirrelayServer.Common
 
         public static bool GetStructualEquatable(IStructuralEquatable? a, IStructuralEquatable? b)
         {
-            return (a, b) switch {
+            return (a, b) switch
+            {
                 (null, null) => true,
                 (null, _) => false,
                 (_, null) => false,

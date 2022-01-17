@@ -49,7 +49,7 @@ namespace SquirrelayServer.Server
         public ClientHandler(ulong id, NetPeerSender<IServerMsg> sender, ServerLoggingConfig loggingConfig)
         {
             _loggingConfig = loggingConfig;
-            
+
             Id = id;
 
             //var subject = Subject.Synchronize(new Subject<IClientMsg>());
