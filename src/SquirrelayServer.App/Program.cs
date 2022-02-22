@@ -39,7 +39,7 @@ namespace SquirrelayServer.App
         private const string DefaultConfigPath = @"config/config.json";
         public static async Task Main(string[] args)
         {
-            const string directory = "squireelayserver-log";
+            const string directory = "squirrelayserver-log";
             Directory.CreateDirectory(directory);
             var date = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
             using var fileStream = File.OpenWrite($"{directory}/log_{date}.txt");
