@@ -25,7 +25,7 @@ namespace SquirrelayServer.Common
         [Key(2)]
         public bool PasswordEnabled { get; set; }
 
-        [DataMember(Name = "enterWhenPlaingAllowed")]
+        [DataMember(Name = "enterWhenPlayingAllowed")]
         [Key(3)]
         public bool EnterWhenPlayingAllowed { get; set; }
 
