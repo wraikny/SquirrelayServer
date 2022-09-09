@@ -55,7 +55,7 @@ namespace ClientExample
                 Assert.True(message.Message == s_msg.Message);
             };
 
-            var client = new Client<PlayerStatus, RoomMessage, GameMessage>(config.NetConfig, options, options, listener);
+            var client = new Client<PlayerStatus, RoomMessage, GameMessage>(config.NetConfig, options, options, "v1.0", listener);
 
             var task = Run(client);
 

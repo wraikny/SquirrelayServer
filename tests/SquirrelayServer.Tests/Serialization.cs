@@ -29,12 +29,12 @@ namespace SquirrelayServer.Tests
         }
 
         [Fact]
-        public async Task ServerMsg_Hello()
+        public async Task ServerMsg_HelloResponse()
         {
             var config = await Config.LoadFromFileAsync(@"config/config.json");
             for (ulong i = 0; i < 3; i++)
             {
-                Check<IServerMsg.Hello, IServerMsg>(new IServerMsg.Hello(i, config.RoomConfig));
+                Check<IServerMsg.HelloResponse, IServerMsg>(new IServerMsg.HelloResponse(i, config.RoomConfig));
             }
         }
 
@@ -156,6 +156,12 @@ namespace SquirrelayServer.Tests
                 msgs.Add(new RelayedGameMessage(2uL, 0.0f, null));
                 Check<IServerMsg.BroadcastGameMessages, IServerMsg>(new IServerMsg.BroadcastGameMessages(msgs));
             }
+        }
+
+        [Fact]
+        public void ClientMsg_Hello()
+        {
+            Check<IClientMsg.Hello, IClientMsg>(new IClientMsg.Hello("v1.0"));
         }
 
         [Fact]

@@ -8,7 +8,7 @@ namespace SquirrelayServer.Common
     /// <summary>
     /// Message sent by the server
     ///</summary>
-    [Union(0, typeof(Hello))]
+    [Union(0, typeof(HelloResponse))]
     [Union(1, typeof(ClientsCountResponse))]
     [Union(2, typeof(RoomListResponse))]
     [Union(3, typeof(CreateRoomResponse))]
@@ -26,7 +26,7 @@ namespace SquirrelayServer.Common
     public interface IServerMsg
     {
         [MessagePackObject]
-        public sealed class Hello : IServerMsg
+        public sealed class HelloResponse : IServerMsg, IResponse
         {
             [Key(0)]
             public ulong Id { get; private set; }
@@ -34,8 +34,11 @@ namespace SquirrelayServer.Common
             [Key(1)]
             public RoomConfig RoomConfig { get; private set; }
 
+            [IgnoreMember]
+            public bool IsSuccess => true;
+
             [SerializationConstructor]
-            public Hello(ulong id, RoomConfig roomConfig)
+            public HelloResponse(ulong id, RoomConfig roomConfig)
             {
                 Id = id;
                 RoomConfig = roomConfig;
@@ -81,6 +84,7 @@ namespace SquirrelayServer.Common
             {
                 Success = 0,
                 AlreadyEntered = 1,
+                NotHelloed = 2,
             }
 
             [Key(0)]
@@ -101,6 +105,7 @@ namespace SquirrelayServer.Common
 
             internal static CreateRoomResponse Success(int id) => new CreateRoomResponse(ResultKind.Success, id);
             internal static readonly CreateRoomResponse AlreadyEntered = new CreateRoomResponse(ResultKind.AlreadyEntered, 0);
+            internal static readonly CreateRoomResponse NotHelloed = new CreateRoomResponse(ResultKind.NotHelloed, 0);
         }
 
         public static class EnterRoomResponse
@@ -113,6 +118,7 @@ namespace SquirrelayServer.Common
                 NumberOfPlayersLimitation = 3,
                 AlreadyEntered = 4,
                 InvalidRoomStatus = 5,
+                DifferentClientVersion = 6,
             }
 
             internal static EnterRoomResponse<byte[]> Success(ulong ownerId, IReadOnlyDictionary<ulong, RoomPlayerStatus> statuses, byte[]? roomMessage)
@@ -122,7 +128,7 @@ namespace SquirrelayServer.Common
             internal static readonly EnterRoomResponse<byte[]> NumberOfPlayersLimitation = new EnterRoomResponse<byte[]>(ResultKind.NumberOfPlayersLimitation);
             internal static readonly EnterRoomResponse<byte[]> AlreadyEntered = new EnterRoomResponse<byte[]>(ResultKind.AlreadyEntered);
             internal static readonly EnterRoomResponse<byte[]> InvalidRoomStatus = new EnterRoomResponse<byte[]>(ResultKind.InvalidRoomStatus);
-
+            internal static readonly EnterRoomResponse<byte[]> DifferentClientVersion = new EnterRoomResponse<byte[]>(ResultKind.DifferentClientVersion);
         }
 
         [MessagePackObject]

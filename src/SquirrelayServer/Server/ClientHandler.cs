@@ -9,6 +9,8 @@ namespace SquirrelayServer.Server
 
     public interface IClientHandler
     {
+        public string? ClientVersion { get; }
+
         public ulong Id { get; }
 
         public int? RoomId { get; set; }
@@ -25,6 +27,8 @@ namespace SquirrelayServer.Server
     {
         private readonly ServerLoggingConfig _loggingConfig;
         private readonly MessageHandler<IServerMsg, IClientMsg> _handler;
+
+        public string? ClientVersion { get; internal set; }
 
         public ulong Id { get; internal set; }
 
@@ -50,6 +54,7 @@ namespace SquirrelayServer.Server
         {
             _loggingConfig = loggingConfig;
 
+            ClientVersion = null;
             Id = id;
 
             //var subject = Subject.Synchronize(new Subject<IClientMsg>());

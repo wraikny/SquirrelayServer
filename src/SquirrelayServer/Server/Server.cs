@@ -166,8 +166,6 @@ namespace SquirrelayServer.Server
                 var client = new ClientHandler(id, sender, _server._config.ServerLoggingConfig);
                 _server._clients[peer.Id] = client;
                 _server._clientsByClientId[id] = client;
-
-                client.Send(new IServerMsg.Hello(id, _server._config.RoomConfig));
             }
 
             void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
@@ -211,6 +209,13 @@ namespace SquirrelayServer.Server
 
                     switch (clientMsg)
                     {
+                        case IClientMsg.Hello m:
+                            {
+                                client.ClientVersion = m.ClientVersion;
+                                var res = new IServerMsg.HelloResponse(client.Id, _server._config.RoomConfig);
+                                client.Send(res);
+                                break;
+                            }
                         case IClientMsg.GetClientsCount _:
                             {
                                 var res = new IServerMsg.ClientsCountResponse(_server._clients.Count);

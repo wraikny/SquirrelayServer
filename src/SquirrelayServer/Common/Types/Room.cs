@@ -32,22 +32,34 @@ namespace SquirrelayServer.Common
 
         [Key(5)]
         public bool IsPlaying { get; set; }
+
+        [Key(6)]
+        public string? ClientVersion { get; set; }
     }
 
     public class RoomInfo<T>
     {
-        public int Id { get; set; }
-        public bool IsVisible { get; set; }
-        public int MaxNumberOfPlayers { get; set; }
+        public int Id { get; private set; }
+        public bool IsVisible { get; private set; }
+        public int MaxNumberOfPlayers { get; private set; }
 
-        public int NumberOfPlayers { get; set; }
+        public int NumberOfPlayers { get; private set; }
 
-        public T? Message { get; set; }
+        public T? Message { get; private set; }
 
-        public bool IsPlaying { get; set; }
+        public bool IsPlaying { get; private set; }
+
+        public string ClientVersion { get; private set; }
 
         public RoomInfo(RoomInfo roomInfo, T? message)
         {
+            if (!(roomInfo.ClientVersion is string clientVersion))
+            {
+                throw new System.ArgumentException("roomInfo.ClientVersion is null");
+            }
+
+            ClientVersion = clientVersion;
+
             Id = roomInfo.Id;
             IsVisible = roomInfo.IsVisible;
             MaxNumberOfPlayers = roomInfo.MaxNumberOfPlayers;

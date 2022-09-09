@@ -36,12 +36,13 @@ namespace SquirrelayServer.Server
         public int Id { get; private set; }
         public RoomInfo Info { get; private set; }
         public string? Password { get; private set; }
+        public string ClientVersion { get; private set; }
 
         public int PlayersCount => _clients.Count;
 
         public RoomStatus RoomStatus { get; private set; }
 
-        public Room(MessagePackSerializerOptions serializerOptions, RoomConfig roomConfig, ServerLoggingConfig loggingConfig, int id, RoomInfo info, string? password)
+        public Room(MessagePackSerializerOptions serializerOptions, RoomConfig roomConfig, ServerLoggingConfig loggingConfig, string clientVersion, int id, RoomInfo info, string? password)
         {
             _serializerOptions = serializerOptions;
             _roomConfig = roomConfig;
@@ -59,6 +60,7 @@ namespace SquirrelayServer.Server
             Id = id;
             Info = info;
             Password = password;
+            ClientVersion = clientVersion;
         }
 
         public float? DeltaSecondToDispose
@@ -177,6 +179,7 @@ namespace SquirrelayServer.Server
 
         public IServerMsg.EnterRoomResponse<byte[]> EnterRoom(IClientHandler client, string? password, byte[]? status)
         {
+            if (ClientVersion != client.ClientVersion) return IServerMsg.EnterRoomResponse.DifferentClientVersion;
             if (Password is string p && p != password) return IServerMsg.EnterRoomResponse.InvalidPassword;
             if (Info.MaxNumberOfPlayers == _clients.Count) return IServerMsg.EnterRoomResponse.NumberOfPlayersLimitation;
 

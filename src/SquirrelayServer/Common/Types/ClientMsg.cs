@@ -14,6 +14,7 @@ namespace SquirrelayServer.Common
     [Union(6, typeof(SetPlayerStatus))]
     [Union(7, typeof(SetRoomMessage))]
     [Union(8, typeof(SendGameMessage))]
+    [Union(9, typeof(Hello))]
     public interface IClientMsg
     {
         [MessagePackObject]
@@ -141,6 +142,19 @@ namespace SquirrelayServer.Common
             public SendGameMessage(byte[] data)
             {
                 Data = data;
+            }
+        }
+
+        [MessagePackObject]
+        public sealed class Hello : IClientMsg, IWithResponse<IServerMsg.HelloResponse>
+        {
+            [Key(0)]
+            public string ClientVersion { get; private set; }
+
+            [SerializationConstructor]
+            public Hello(string clientVersion)
+            {
+                ClientVersion = clientVersion;
             }
         }
     }

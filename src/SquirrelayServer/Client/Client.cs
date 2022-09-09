@@ -30,6 +30,8 @@ namespace SquirrelayServer.Client
 
         public CurrentRoomInfo<TPlayerStatus, TRoomMessage>? CurrentRoom { get; private set; }
 
+        public string ClientVersion { get; private set; }
+
         public ulong? Id { get; private set; }
 
         public RoomConfig? RoomConfig { get; private set; }
@@ -46,6 +48,7 @@ namespace SquirrelayServer.Client
             NetConfig netConfig,
             MessagePackSerializerOptions serverSerializerOptions,
             MessagePackSerializerOptions clientsSerializerOptions,
+            string clientVersion,
             IClientListener<TPlayerStatus, TRoomMessage, TMsg> listener
         )
         {
@@ -55,6 +58,7 @@ namespace SquirrelayServer.Client
 
             _gameMessages = new List<RelayedGameMessage>();
 
+            ClientVersion = clientVersion;
             Id = null;
             IsStarted = false;
 
@@ -93,9 +97,10 @@ namespace SquirrelayServer.Client
         /// Start the connection to the server
         /// </summary>
         /// <param name="host"></param>
-        /// <param name="listener"></param>
+        /// <param name="port"></param>
+        /// <param name="connectionKey"></param>
         /// <returns></returns>
-        public async Task<bool> Start(string host)
+        public async Task<bool> Start(string host, int port, string connectionKey)
         {
             if (IsStarted)
             {
@@ -107,11 +112,10 @@ namespace SquirrelayServer.Client
 
             _manager.Start();
 
-            _manager.Connect(host, _netConfig.Port, _netConfig.ConnectionKey);
+            _manager.Connect(host, port, connectionKey);
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, "Client is waiting for connection.");
 
-            var waitHello = _messageHandler.WaitMsgOfType<IServerMsg.Hello>();
             while (_messageHandler.SenderIsNull)
             {
                 await Task.Yield();
@@ -123,12 +127,26 @@ namespace SquirrelayServer.Client
                 }
             }
 
-            var hello = await waitHello;
-            Id = hello.Id;
-            RoomConfig = hello.RoomConfig;
+            var helloMsg = new IClientMsg.Hello(ClientVersion);
+
+            _messageHandler.Send(helloMsg);
+
+            var helloResponse = await _messageHandler.WaitMsgOfType<IServerMsg.HelloResponse>();
+            Id = helloResponse.Id;
+            RoomConfig = helloResponse.RoomConfig;
 
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Hello from server, received self id({Id}).");
             return true;
+        }
+
+        /// <summary>
+        /// Start the connection to the server
+        /// </summary>
+        /// <param name="host"></param>
+        /// <returns></returns>
+        public Task<bool> Start(string host)
+        {
+            return Start(host, _netConfig.Port, _netConfig.ConnectionKey);
         }
 
         /// <summary>

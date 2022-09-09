@@ -115,6 +115,11 @@ namespace SquirrelayServer.Server
 
         public IServerMsg.CreateRoomResponse CreateRoom(IClientHandler client, IClientMsg.CreateRoom msg)
         {
+            if (client.ClientVersion is null)
+            {
+                return IServerMsg.CreateRoomResponse.NotHelloed;
+            }
+
             // is not null
             if (client.RoomId is { })
             {
@@ -131,12 +136,13 @@ namespace SquirrelayServer.Server
                 IsVisible = _roomConfig.InvisibleEnabled ? msg.IsVisible : true,
                 MaxNumberOfPlayers = Utils.Clamp(msg.MaxNumberOfPlayers, maxRange.Item1, maxRange.Item2),
                 NumberOfPlayers = 0,
+                ClientVersion = client.ClientVersion,
                 Message = _roomConfig.RoomMessageEnabled ? msg.RoomMessage : null,
             };
 
             var password = _roomConfig.PasswordEnabled ? msg.Password : null;
 
-            var room = new Room(_serializerOptions, _roomConfig, _loggingConfig, roomId, roomInfo, password);
+            var room = new Room(_serializerOptions, _roomConfig, _loggingConfig, client.ClientVersion, roomId, roomInfo, password);
 
             _rooms[roomId] = room;
             _roomInfoList[roomId] = roomInfo;
