@@ -36,6 +36,7 @@ namespace SquirrelayServer.Tests
         private static Mock<Server.IClientHandler> CreateClientHandlerMock(ulong id)
         {
             var c = new Mock<Server.IClientHandler>();
+            c.SetupGet(p => p.ClientVersion).Returns("v1.0");
             c.SetupGet(p => p.Id).Returns(id);
             c.SetupProperty(p => p.RoomId, null);
             return c;
