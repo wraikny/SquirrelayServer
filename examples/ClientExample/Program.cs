@@ -90,8 +90,9 @@ namespace ClientExample
                 NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"RoomList.Count:{roomList.Count}");
             }
 
-            var createRoomRes = await client.RequestCreateRoomAsync();
+            var createRoomRes = await client.RequestCreateRoomAsync(roomMessage: new RoomMessage { Value = 42 });
             Assert.True(createRoomRes.IsSuccess);
+            Assert.Equal<int>(42, client.CurrentRoom.RoomMessage.Value);
             NetDebug.Logger?.WriteNet(NetLogLevel.Info, $"Success to create room:{createRoomRes.Id}");
 
             Assert.True(client.CurrentRoom is { });
@@ -122,6 +123,11 @@ namespace ClientExample
             public static void True(bool t)
             {
                 if (!t) throw new Exception("not true.");
+            }
+
+            public static void Equal<T>(T expected, T target)
+            {
+                if (!target.Equals(expected)) throw new Exception($"target {target} is not expected {expected}.");
             }
         }
     }

@@ -299,7 +299,12 @@ namespace SquirrelayServer.Client
 
             if (res.IsSuccess)
             {
-                CurrentRoom = CreateCurrentRoomInfo(res.Id, Id, null, null);
+                CurrentRoom = new CurrentRoomInfo<TPlayerStatus, TRoomMessage>(res.Id, Id);
+                CurrentRoom.PlayerStatusesImpl[Id.Value] = playerStatus;
+                if (RoomConfig.RoomMessageEnabled)
+                {
+                    CurrentRoom.RoomMessage = roomMessage;
+                }
             }
 
             return res;
@@ -511,6 +516,7 @@ namespace SquirrelayServer.Client
                     return;
                 }
 
+                currentRoomInfo.RoomMessage = roomMsg;
                 _updateContext.Enqueue(() => { _listener.OnRoomMessageUpdated(roomMsg); });
             }
         }

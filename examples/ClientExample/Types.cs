@@ -17,7 +17,8 @@ namespace ClientExample
     [MessagePackObject]
     public sealed class RoomMessage
     {
-
+        [Key(0)]
+        public int Value { get; set; }
     }
 
     [MessagePackObject]
