@@ -287,6 +287,9 @@ namespace SquirrelayServer.Client
         public async Task<IServerMsg.CreateRoomResponse> RequestCreateRoomAsync(bool isVisible = true, string? password = null, int? maxNumberOfPlayers = null, TPlayerStatus? playerStatus = null, TRoomMessage? roomMessage = null)
         {
             if (!IsConnected || RoomConfig is null) throw new ClientNotConnectedException();
+#pragma warning disable CS8629
+            var selfIf = Id.Value;
+#pragma warning restore CS8629
 
             isVisible = RoomConfig.InvisibleEnabled ? isVisible : true;
             password = RoomConfig.PasswordEnabled ? password : null;
@@ -299,8 +302,8 @@ namespace SquirrelayServer.Client
 
             if (res.IsSuccess)
             {
-                CurrentRoom = new CurrentRoomInfo<TPlayerStatus, TRoomMessage>(res.Id, Id);
-                CurrentRoom.PlayerStatusesImpl[Id.Value] = playerStatus;
+                CurrentRoom = new CurrentRoomInfo<TPlayerStatus, TRoomMessage>(res.Id, selfIf);
+                CurrentRoom.PlayerStatusesImpl[selfIf] = playerStatus;
                 if (RoomConfig.RoomMessageEnabled)
                 {
                     CurrentRoom.RoomMessage = roomMessage;
